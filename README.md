@@ -13,13 +13,12 @@
 * Для связи с системой post hawk задействуется модуль curl или sockets, хотя бы один из этих модулей должен быть активирован, в противном случае использовать систему не удастся.
 Пример использования php апи: 
 
-require_once 'api/php/hawk_api.php';
-use \hawk_api\hawk_api;
+<pre>
 
-{{{
-#!php
+	require_once 'api/php/hawk_api.php';
+	use \hawk_api\hawk_api;
 
-//создаём объект апи
+	//создаём объект апи
 	$api_key = 'ключ, полученный после регистрации';
 	$api = new hawk_api($api_key);
 	//регистрируем пользователя в системе
@@ -28,7 +27,8 @@ use \hawk_api\hawk_api;
 	//удаляем регистрацию пользователя
 	//рекомендуется делать при деавторизации пользователя
 	$api->unregister_user(md5('user2'));
-}}}
+
+</pre>
 
 На стороне клиента. Используется объект HAWK_API. Клиентский браузер должен поддерживать технология WebSockets
 
@@ -44,6 +44,7 @@ use \hawk_api\hawk_api;
 Пример использования клиентского апи: 
 
 <pre>
+
 	<!DOCTYPE html>
 	<html>
 	    <head>
@@ -89,4 +90,5 @@ use \hawk_api\hawk_api;
 	        <input type="button" id="send" value="Отправить">
 	    </body>
 	</html>
+	
 </pre>
