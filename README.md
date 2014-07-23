@@ -1,6 +1,7 @@
 # API FOR SERVICE [POST HAWK](http://post-hawk.com) 
 
 Для того, чтобы воспользоваться услугами сервиса Вам необходимо сделать три шага.
+
 1. [Зарегистрироваться](http://post-hawk.com/auth/)
 1. Добавить домен (ы) в настройках учётной записи
 1. Скачать и подключить файлы апи.
@@ -15,8 +16,10 @@
 require_once 'api/php/hawk_api.php';
 use \hawk_api\hawk_api;
 
-	:::php
-	//создаём объект апи
+{{{
+#!php
+
+//создаём объект апи
 	$api_key = 'ключ, полученный после регистрации';
 	$api = new hawk_api($api_key);
 	//регистрируем пользователя в системе
@@ -25,6 +28,7 @@ use \hawk_api\hawk_api;
 	//удаляем регистрацию пользователя
 	//рекомендуется делать при деавторизации пользователя
 	$api->unregister_user(md5('user2'));
+}}}
 
 На стороне клиента. Используется объект HAWK_API. Клиентский браузер должен поддерживать технология WebSockets
 
@@ -39,7 +43,7 @@ use \hawk_api\hawk_api;
 	* hawk.server_error — сервер сгенерировал ошибку
 Пример использования клиентского апи: 
 
-	:::html
+<pre>
 	<!DOCTYPE html>
 	<html>
 	    <head>
@@ -47,8 +51,6 @@ use \hawk_api\hawk_api;
 	        <script type="text/javascript" src="api/js/jquery.js"></script>
 	        <script type="text/javascript" src="api/js/hawk_api.js"></script>
 	        <script type="text/javascript">
-
-	        	:::javascript
 	            $(document).ready(function(){
 	                HAWK_API.init({
 	                        user_id: 'hash' //идентификатор пользователя, который зарегистрирован в системе
@@ -78,8 +80,6 @@ use \hawk_api\hawk_api;
 	                    $('#messages').append('<div>' + msg.from + ': ' + msg.text + '</div><br><br>');
 	                });
 	            });
-
-     :::html
 	        </script>
 	    </head>
 	    <body>
@@ -89,3 +89,4 @@ use \hawk_api\hawk_api;
 	        <input type="button" id="send" value="Отправить">
 	    </body>
 	</html>
+</pre>
