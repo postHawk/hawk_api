@@ -24,23 +24,31 @@ var HAWK_API = {
 
 		if(!HAWK_API.reinitialization)
 		{
-			this.settings = $.extend(this.settings, opt);
-
-			if(!this.settings.user_id)
+			if(!!WebSocket)
 			{
-				this.print_error('need set user_id property');
+				this.settings = $.extend(this.settings, opt);
+
+				if(!this.settings.user_id)
+				{
+					this.print_error('need set user_id property');
+					return false;
+				}
+
+				this.init.bind(this);
+				this.bind_handler.bind(this);
+				this.bind_default_hadler.bind(this);
+				this.send_message.bind(this);
+				this.get_user_id.bind(this);
+				this.check_on_error.bind(this);
+				this.bind_handler('hawk.open', function() {
+					HAWK_API.set_user_id();
+				});
+			}
+			else
+			{
+				this.print_error('Технология не поддерживается');
 				return false;
 			}
-
-			this.init.bind(this);
-			this.bind_handler.bind(this);
-			this.bind_default_hadler.bind(this);
-			this.send_message.bind(this);
-			this.get_user_id.bind(this);
-			this.check_on_error.bind(this);
-			this.bind_handler('hawk.open', function() {
-				HAWK_API.set_user_id();
-			});
 		}
 
 		HAWK_API.create_socket(HAWK_API.settings.url);
@@ -90,7 +98,7 @@ var HAWK_API = {
 		}
 	},
 	on_open: function(e){
-		console.log('open');
+		//console.log('open');
 		HAWK_API.reinitialization = false;
 		HAWK_API.ws.open = true;
 		$(HAWK_API).trigger('hawk.open');
@@ -100,24 +108,24 @@ var HAWK_API = {
 		{
 			var data = JSON.parse(e.data);
 			$(HAWK_API).trigger('hawk.message', [data]);
-			console.log(data);
+//			console.log(data);
 		}
 		catch (ex)
 		{
-			console.log(e.data);
+//			console.log(e.data);
 		}
 
 		HAWK_API.check_on_error(e.data);
 
 	},
 	on_close: function(e){
-		console.log('close');
+//		console.log('close');
 		HAWK_API.reinitialization = true;
 		setTimeout(HAWK_API.init, 30000);
 		$(HAWK_API).trigger('hawk.close');
 	},
 	on_error: function(e){
-		console.log('error');
+//		console.log('error');
 		$(HAWK_API).trigger('hawk.socket_error');
 	},
 	check_on_error: function(msg) {
