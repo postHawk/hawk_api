@@ -18,13 +18,16 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 	 * отправка сообщения
 	 * @param array $data сообщение
 	 * @param string $type тип сообщения
-	 * @return type
+	 * @return string or false;
 	 */
 	public function send($data, $type)
 	{
 		$socket	 = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-		
-		socket_connect($socket, $this->host, $this->port);
+
+		if(socket_connect($socket, $this->host, $this->port) === false)
+		{
+			return false;
+		}
 
 		$in	 = "POST / HTTP/1.1\r\n";
 		$in .= "Host: {$this->host}\r\n";
@@ -34,19 +37,16 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 		$in .= '{' . $type . '}' . json_encode($data);
 		$out = '';
 
-		echo "Отправляем  HTTP HEAD запрос...";
-		socket_write($socket, $in, strlen($in));
-		echo "OK.\n";
-
-		echo "Читаем ответ:\n\n";
+		if(socket_write($socket, $in, strlen($in)) === false)
+		{
+			return false;
+		}
 		while ($out = socket_read($socket, 2048))
 		{
 			echo $out;
 		}
 
-		echo "\nЗакрываем сокет...";
 		socket_close($socket);
-		echo "OK.\n\n";
 	}
 
 }
