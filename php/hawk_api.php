@@ -55,6 +55,76 @@ class hawk_api
 	}
 
 	/**
+	 * добавление пользователя в группы
+	 * создание новых групп происходит автоматически
+	 * @param array $groups группы
+	 * @return string
+	 */
+	public function add_user_to_group($id, array $groups)
+	{
+		if($this->check_id($id))
+		{
+			return $this->transport->send(array(
+				'key' => $this->key,
+				'id' => $id,
+				'groups' => $groups,
+			), 'add_in_groups');
+		}
+	}
+
+	/**
+	 * удаление пользователя из группы
+	 * @param array $groups группы
+	 * @return string
+	 */
+	public function remove_user_from_group($id, array $groups)
+	{
+		if($this->check_id($id))
+		{
+			return $this->transport->send(array(
+				'key' => $this->key,
+				'id' => $id,
+				'groups' => $groups,
+			), 'remove_from_groups');
+		}
+	}
+
+	/**
+	 * получение списка пользователей в группе или группах
+	 * @param array $groups
+	 * @return string JSON
+	 */
+	public function get_user_by_group(array $groups)
+	{
+		return $this->transport->send(array(
+			'key' => $this->key,
+			'groups' => $groups,
+		), 'get_by_group');
+	}
+
+	/**
+	 * отправка сообщения пользователям группы / групп
+	 * @param string $from id пользователя от которого происходит рассылка
+	 * @param string $text текст сообщения
+	 * @param array $groups группы куда послать сообщения
+	 * @param mixed $time время в любом формате
+	 * @return string
+	 */
+	public function seng_group_message($from, $text, array $groups, $time = false)
+	{
+		if($this->check_id($from))
+		{
+			return $this->transport->send(array(
+				'key' => $this->key,
+				'from' => $from,
+				'time' => $time,
+				'text' => $text,
+				'groups' => $groups,
+			), 'send_group_message');
+		}
+	}
+
+	/**
 	 * проверка идентификатора пользователя
 	 * @param string $id идентификатор
 	 * @return boolean
