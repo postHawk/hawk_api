@@ -62,7 +62,7 @@ class hawk_api
 	 */
 	public function add_user_to_group($id, array $groups)
 	{
-		if($this->check_id($id))
+		if($this->check_id($id) && $this->check_group($groups))
 		{
 			return $this->transport->send(array(
 				'key' => $this->key,
@@ -79,7 +79,7 @@ class hawk_api
 	 */
 	public function remove_user_from_group($id, array $groups)
 	{
-		if($this->check_id($id))
+		if($this->check_id($id) && $this->check_group($groups))
 		{
 			return $this->transport->send(array(
 				'key' => $this->key,
@@ -96,10 +96,13 @@ class hawk_api
 	 */
 	public function get_user_by_group(array $groups)
 	{
-		return $this->transport->send(array(
-			'key' => $this->key,
-			'groups' => $groups,
-		), 'get_by_group');
+		if($this->check_group($groups))
+		{
+			return $this->transport->send(array(
+				'key' => $this->key,
+				'groups' => $groups,
+			), 'get_by_group');
+		}
 	}
 
 	/**
@@ -112,7 +115,7 @@ class hawk_api
 	 */
 	public function seng_group_message($from, $text, array $groups, $time = false)
 	{
-		if($this->check_id($from))
+		if($this->check_id($from) && $this->check_group($groups))
 		{
 			return $this->transport->send(array(
 				'key' => $this->key,
@@ -136,7 +139,20 @@ class hawk_api
 			return true;
 		}
 
-		throw new \Exception('Неверный формат идентификатора');
+		throw new \Exception('Неверный формат идентификатора пользователя');
+	}
+
+	private function check_group($groups)
+	{
+		foreach ($groups as $group)
+		{
+			if(!$this->check_id($group))
+			{
+				throw new \Exception('Неверный формат идентификатора группы');
+			}
+		}
+
+		return true;
 	}
 
 	/**
