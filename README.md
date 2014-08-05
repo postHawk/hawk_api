@@ -38,7 +38,7 @@ $api->add_user_to_group($u1, array('testgroup3'));
 $api->remove_user_from_group($u2, array('testgroup'));
 //послать сообщение всем online-пользователям группы
 //сообщения можно посылать только в группы в которых пользователь зарегистрирован (add_user_to_group)
-$api->seng_group_message($u2, 'test msg', array('testgroup', 'test_group2'));
+$api->seng_group_message($u2, 'test msg', array('testgroup', 'testgroup2'));
 ?>
 ```
 
