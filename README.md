@@ -16,32 +16,55 @@
 
 ```
 #!php
+
 <?php
 require_once 'api/php/hawk_api.php';
 use \hawk_api\hawk_api;
+
 //создаём объект апи
 $api_key = 'ключ, полученный после регистрации';
 $api = new hawk_api($api_key);
 $u1 = md5('user1');
 $u2 = md5('user2');
+?>
+```
+## Базовый функционал работы с пользователями ##
+
+```
+#!php
+<?php
 //регистрируем пользователя в системе
 //рекомендуется делать при авторизации пользователя
 $api->register_user($u1);
+$api->register_user($u2);
 //удаляем регистрацию пользователя
 //рекомендуется делать при деавторизации пользователя
 $api->unregister_user($u2);
-//добавление пользователя в группу
-//идентификатор группы должен удовлетворять тем же требованиям, что и идентификатор пользователя
-$api->add_user_to_group($u2, array('testgroup', 'testgroup2'));
-$api->add_user_to_group($u1, array('testgroup3'));
-//удаление пользователя из группы
-$api->remove_user_from_group($u2, array('testgroup'));
-//послать сообщение всем online-пользователям группы
-//сообщения можно посылать только в группы в которых пользователь зарегистрирован (add_user_to_group)
-$api->seng_group_message($u2, 'test msg', array('testgroup', 'testgroup2'));
 ?>
 ```
 
+## Функционал работы с группами ##
+
+```
+#!php
+<?php
+$g1 = md5('group1');
+$g2 = md5('group2');
+$g3 = md5('group3');
+
+//добавление пользователя в группу
+$api->add_user_to_group('test2', array($g1, $g2));
+$api->add_user_to_group('test', array($g1, $g2));
+//удаление пользователя из группы
+$api->remove_user_from_group('test', array($g2);
+//отправка группового сообщения
+$api->seng_group_message('test', 'message to group', array($g1, $g2));
+//получение пользователей в группе
+json_decode($api->get_user_by_group(array($g1)));
+json_decode($api->get_user_by_group(array($g2)));
+json_decode($api->get_user_by_group(array($g1, $g2)));
+?>
+```
 
 На стороне клиента. Используется объект HAWK_API.
 
