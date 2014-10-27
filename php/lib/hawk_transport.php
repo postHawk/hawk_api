@@ -6,7 +6,7 @@ class hawk_transport
 	private static $transport = null;
 	protected $host = '127.0.0.1';
 	protected $port = '2222';
-	protected $url = "http://127.0.0.1:2222";
+	protected $url = "http://post-hawk.com:2222";
 
 	/**
 	 * конструктор
