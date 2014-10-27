@@ -132,7 +132,7 @@ class hawk_api
 	 * @param string $id идентификатор
 	 * @return boolean
 	 */
-	private function check_id($id)
+	protected function check_id($id)
 	{
 		if (preg_match('/^[a-zA-Z\d]{3,64}$/u', $id))
 		{

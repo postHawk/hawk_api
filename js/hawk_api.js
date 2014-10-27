@@ -16,7 +16,8 @@ var HAWK_API = {
 		invalid_data: 'Общая ошибка данных. Ожидался POST-запрос',
 		invalid_login_data: 'Не верный логин получателя',
 		send_message_yourself: 'Нельзя отправить сообщение самому себе',
-		invalid_login_format: 'Неверный формат идентификатора'
+		invalid_login_format: 'Неверный формат идентификатора',
+		domain_not_register: 'Данный домен не зарегистрирован в системе'
 	},
 	reinitialization: false,
 
@@ -132,7 +133,8 @@ var HAWK_API = {
 		if(typeof this.errors2string[msg] !== 'undefined')
 		{
 			this.print_error(this.errors2string[msg]);
-			$(HAWK_API).trigger('hawk.server_error');
+			$(HAWK_API).trigger('hawk.server_error', [this.errors2string[msg]]);
+			HAWK_API.reinitialization = false;
 		}
 	},
 	print_error: function(text){
