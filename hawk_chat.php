@@ -60,14 +60,14 @@ class hawk_chat extends hawk_api\hawk_api
 		if($res != 'ok')
 		{
 			session_destroy();
-			throw new Exception('Ошибка регистрации пользователя');
+			throw new Exception('Ошибка регистрации пользователя: ' . $res);
 		}
 		$res = $this->add_user_to_group($id, array($this->group_id));
 		
 		if($res != 'ok')
 		{
 			session_destroy();
-			throw new Exception('Ошибка добавления пользователя в группу');
+			throw new Exception('Ошибка добавления пользователя в группу: ' . $res);
 		}
 		
 	}

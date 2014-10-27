@@ -7,7 +7,15 @@ $(document).ready(function () {
 	});
 	HAWK_API.bind_handler('hawk.message', function (e, msg) {
 		add_log('<span style="color: blue"><b>поступило новое сообщение</b></span>');
-		$("#messages").append('<div>' + msg.text.from_login + ' [' + msg.time + ']: ' + msg.text.message + '</div>');
+		var date = new Date(msg.time*1000);
+
+		$("#messages").append('<div><small>['
+				+ date.getDate() + '.'
+				+ date.getMonth() + '.'
+				+ date.getFullYear() + ' '
+				+ date.getHours() + ':'
+				+ date.getMinutes()
+				+ ']</small> <b>(' + msg.text.from_login + ')</b>: ' + msg.text.message + '</div>');
 	});
 	HAWK_API.bind_handler('hawk.close', function (e, msg) {
 		add_log('<span style="color: red"><b>соединение с сервером закрыто</b></span>');
