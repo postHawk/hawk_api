@@ -4,7 +4,7 @@ var HAWK_API = {
 		open: false
 	},
 	settings: {
-		url: 'ws://127.0.0.1:2222',
+		url: null,
 		user_id: false
 	},
 	errors2string:{
@@ -41,6 +41,7 @@ var HAWK_API = {
 				this.send_message.bind(this);
 				this.get_user_id.bind(this);
 				this.check_on_error.bind(this);
+				this.get_url.bind(this);
 				this.bind_handler('hawk.open', function() {
 					HAWK_API.set_user_id();
 				});
@@ -52,7 +53,7 @@ var HAWK_API = {
 			}
 		}
 
-		HAWK_API.create_socket(HAWK_API.settings.url);
+		HAWK_API.create_socket(HAWK_API.get_url());
 
 	},
 	create_socket: function(url){
@@ -81,6 +82,9 @@ var HAWK_API = {
 	},
 	get_user_id: function() {
 		return this.settings.user_id;
+	},
+	get_url: function () {
+		return this.settings.url;
 	},
 	bind_handler: function(type, fn){
 		$(this).on(type, fn);

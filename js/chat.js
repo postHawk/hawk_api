@@ -8,7 +8,6 @@ $(document).ready(function () {
 	HAWK_API.bind_handler('hawk.message', function (e, msg) {
 		add_log('<span style="color: blue"><b>поступило новое сообщение</b></span>');
 		var date = new Date(msg.time*1000);
-
 		$("#messages").append('<div><small>['
 				+ date.getDate() + '.'
 				+ date.getMonth() + '.'
@@ -27,7 +26,7 @@ $(document).ready(function () {
 		add_log('<span style="color: red"><b>сервер сгенерировал ошибку: ' + msg + '</b></span>');
 	});
 
-	$('#chat').draggable({containment: "#wrapper",
+	$('#chat').draggable({containment: "#wrapper_chat",
 		scroll: false,
 		handle: "#header"});
 
@@ -38,7 +37,8 @@ $(document).ready(function () {
 	else
 	{
 		HAWK_API.init({
-			user_id: CONTROL_OBJ.user_id
+			user_id: CONTROL_OBJ.user_id,
+			url: CONTROL_OBJ.server_url
 		});
 	}
 
@@ -72,14 +72,14 @@ $(document).ready(function () {
 
 function add_user_in_chat(u)
 {
+	var st = 'offline';
 	if(u.online)
 	{
-		$('#online_u').append('<div class="online" id="' + u.user + '" style="margin-left: 5px; font-size: 14px;"><b>' + ((u.login) ? u.login : u.user) + '</b></div>');
+		st = 'online';
 	}
-	else
-	{
-		$('#offline_u').append('<div class="offline" id="' + u.user + '" style="margin-left: 5px; font-size: 14px;"><b>' + ((u.login) ? u.login : u.user) + '</b></div>');
-	}
+
+	$('#' + st + '_u').append('<div class="' + st + '" id="' + u.user
+			+ '" style="margin-left: 5px; font-size: 14px;"><b>' + ((u.login) ? u.login : u.user) + '</b></div>');
 }
 
 function add_log(str)
@@ -110,7 +110,8 @@ function set_login()
 		else
 		{
 			HAWK_API.init({
-				user_id: CONTROL_OBJ.user_id
+				user_id: CONTROL_OBJ.user_id,
+				url: CONTROL_OBJ.server_url
 			});
 
 			CONTROL_OBJ.user_login = login;
@@ -134,7 +135,7 @@ function get_online()
 			for (var key in data.result)
 			{
 				var u = data.result[key];
-				if ($.inArray(u.user, users) === -1)
+				if (u.user && $.inArray(u.user, users) === -1)
 				{
 					add_user_in_chat(u);
 					users.push(u);
