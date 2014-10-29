@@ -1,12 +1,32 @@
 var HAWK_API = {
 	ws: {
+		/**
+		 * текущий сокет
+		 * @type WebSocket
+		 */
 		socket: null,
+		/**
+		 * статус сокета
+		 * @type Boolean
+		 */
 		open: false
 	},
 	settings: {
+		/**
+		 * адрес сервиса
+		 * @type string
+		 */
 		url: null,
+		/**
+		 * id пользователя
+		 * @type string
+		 */
 		user_id: false
 	},
+	/**
+	 * преобразование ошибок сервиса в строки
+	 * @type object
+	 */
 	errors2string:{
 		user_already_exists: 'Пользователь с таким идентификатором уже зарегистрирован в системе',
 		invalid_key: 'Неверный ключ апи',
@@ -19,10 +39,20 @@ var HAWK_API = {
 		invalid_login_format: 'Неверный формат идентификатора',
 		domain_not_register: 'Данный домен не зарегистрирован в системе'
 	},
+	/**
+	 * необходимость переинициализации
+	 * @type Boolean
+	 */
 	reinitialization: false,
 
+/**
+ * метод инициализации подключения
+ * @param {object} opt массив настроек
+ * @returns {Boolean}
+ * @todo а нужно ли переподключение при ошибке?
+ */
 	init: function(opt) {
-
+		//если при подключении случилась ошибка, то пробуем переподключиться
 		if(!HAWK_API.reinitialization)
 		{
 			if(!!WebSocket)
@@ -31,10 +61,11 @@ var HAWK_API = {
 
 				if(!this.settings.user_id)
 				{
-					this.print_error('need set user_id property');
+					this.print_error('необходимо указать user_id');
 					return false;
 				}
 
+				//биндим контекст для методов
 				this.init.bind(this);
 				this.bind_handler.bind(this);
 				this.bind_default_hadler.bind(this);
@@ -53,9 +84,16 @@ var HAWK_API = {
 			}
 		}
 
+		//создаём подключение
 		HAWK_API.create_socket(HAWK_API.get_url());
+		return true;
 
 	},
+	/**
+	 * метод инициализирует подключение к сокету
+	 * @param {string} url адрес для подключения
+	 * @returns {void}
+	 */
 	create_socket: function(url){
 		this.ws.socket = new WebSocket(url);
 		this.bind_default_hadler('onopen', this.on_open);
@@ -63,10 +101,19 @@ var HAWK_API = {
 		this.bind_default_hadler('onclose', this.on_close);
 		this.bind_default_hadler('onerror', this.on_error);
 	},
+	/**
+	 * метод отправки сообщения
+	 * @param {object} msg
+	 * @returns {void}
+	 */
 	send_message: function(msg) {
 		this.ws.socket.send(msg);
 		$(HAWK_API).trigger('hawk.msg_sended');
 	},
+	/**
+	 * метод устанавливает текущего пользователя
+	 * @returns {void}
+	 */
 	set_user_id: function() {
 		if(this.check_user_id(this.settings.user_id))
 		{
@@ -77,18 +124,43 @@ var HAWK_API = {
 			this.print_error(this.errors2string.invalid_login_format);
 		}
 	},
+	/**
+	 * проверка корректности логина пользователя
+	 * @param {string} id логин
+	 * @returns {Boolean}
+	 */
 	check_user_id: function(id) {
 		return /^[a-zA-Z\d]{3,64}$/.test(id);
 	},
+	/**
+	 * возвращает id пользователя
+	 * @returns {HAWK_API.settings.user_id}
+	 */
 	get_user_id: function() {
 		return this.settings.user_id;
 	},
+	/**
+	 * возвращает url пользователя
+	 * @returns {HAWK_API.settings.url}
+	 */
 	get_url: function () {
 		return this.settings.url;
 	},
+	/**
+	 * привязка обработчиков к событию
+	 * @param {string} type
+	 * @param {function} fn
+	 * @returns {void}
+	 */
 	bind_handler: function(type, fn){
 		$(this).on(type, fn);
 	},
+	/**
+	 * привязка дефолтных обработчиков к событию
+	 * @param {string} type
+	 * @param {function} fn
+	 * @returns {void}
+	 */
 	bind_default_hadler: function(type, fn)
 	{
 		if(typeof this.ws.socket[type] == 'object')
@@ -96,18 +168,32 @@ var HAWK_API = {
 			this.ws.socket[type] = fn;
 		}
 	},
+	/**
+	 * метод отвязывает обработчик события
+	 * @param {string} type
+	 * @returns {void}
+	 */
 	unbind_handler: function(type){
 		if(typeof this.ws.socket[type] == 'object')
 		{
 			this.ws.socket[type] = null;
 		}
 	},
-	on_open: function(e){
+	/**
+	 * дефолтный обработчик открытия сокета
+	 * @returns {void}
+	 */
+	on_open: function(){
 		//console.log('open');
 		HAWK_API.reinitialization = false;
 		HAWK_API.ws.open = true;
 		$(HAWK_API).trigger('hawk.open');
 	},
+	/**
+	 * дефолтный обработчик сообщения
+	 * @param {object}
+	 * @returns {void}
+	 */
 	on_message: function(e){
 		try
 		{
@@ -123,16 +209,29 @@ var HAWK_API = {
 		HAWK_API.check_on_error(e.data);
 
 	},
-	on_close: function(e){
+	/**
+	 * дефолтный обработчик закрытия сокета
+	 * @returns {void}
+	 */
+	on_close: function(){
 //		console.log('close');
 		HAWK_API.reinitialization = true;
 		setTimeout(HAWK_API.init, 30000);
 		$(HAWK_API).trigger('hawk.close');
 	},
-	on_error: function(e){
+	/**
+	 * дефолтный обработчик ошибки сокета
+	 * @returns {void}
+	 */
+	on_error: function(){
 //		console.log('error');
 		$(HAWK_API).trigger('hawk.socket_error');
 	},
+	/**
+	 * проверка сообщения на ошибки
+	 * @param {object|string} msg ответ сервиса
+	 * @returns {void}
+	 */
 	check_on_error: function(msg) {
 		if(typeof this.errors2string[msg] !== 'undefined')
 		{
@@ -141,6 +240,11 @@ var HAWK_API = {
 			HAWK_API.reinitialization = false;
 		}
 	},
+	/**
+	 * выводит сообщение об ошибке в консоль
+	 * @param {string} text
+	 * @returns {void}
+	 */
 	print_error: function(text){
 		console.error(text);
 	}

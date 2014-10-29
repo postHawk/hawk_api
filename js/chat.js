@@ -1,4 +1,6 @@
 $(document).ready(function () {
+
+	//подписываемся на события
 	HAWK_API.bind_handler('hawk.open', function (e, msg) {
 		add_log('<span style="color: green"><b>соединение с сервером установлено</b></span>');
 	});
@@ -26,16 +28,19 @@ $(document).ready(function () {
 		add_log('<span style="color: red"><b>сервер сгенерировал ошибку: ' + msg + '</b></span>');
 	});
 
+	//делаем окошко перетаскиваемым
 	$('#chat').draggable({containment: "#wrapper_chat",
 		scroll: false,
 		handle: "#header"});
 
+	//если у юзера нет логина, то просим ввести его
 	if (!CONTROL_OBJ.user_login)
 	{
 		set_login();
 	}
 	else
 	{
+		//инициализируем подключение к сервису
 		HAWK_API.init({
 			user_id: CONTROL_OBJ.user_id,
 			url: CONTROL_OBJ.server_url
@@ -70,6 +75,11 @@ $(document).ready(function () {
 	setInterval(get_online, 30000);
 });
 
+/**
+ * метод добавляет пользователя в чат
+ * @param {object} u пользователь
+ * @returns {void}
+ */
 function add_user_in_chat(u)
 {
 	var st = 'offline';
@@ -82,20 +92,30 @@ function add_user_in_chat(u)
 			+ '" style="margin-left: 5px; font-size: 14px;"><b>' + ((u.login) ? u.login : u.user) + '</b></div>');
 }
 
+/**
+ * метод добавляет запись в лог
+ * @param {string} str
+ * @returns {void}
+ */
 function add_log(str)
 {
 	$('#action_log').append(str + '<br>');
 }
 
+/**
+ * метод устанавливает логин текущего пользователя
+ * @returns {undefined}
+ */
 function set_login()
 {
-	var login = prompt('Укажите ваш логин в чате');
+	var login = prompt("Укажите ваш логин в чате \r\n(допускаются латинские буквы, цифры и символ _)");
 	if (!login || login.trim() === '')
 	{
 		set_login();
 		return;
 	}
 
+	//отправляем логин на сервер и если всё хорошо инициализируем подключение
 	$.post(document.location.href, {
 		action: 'set_login',
 		login: login
@@ -120,8 +140,13 @@ function set_login()
 	});
 }
 
+/**
+ * метод получает пользователей из сервиса
+ * @returns {void}
+ */
 function get_online()
 {
+	//прсим пользователей у сервера и обновляем список в чате
 	$.post(document.location.href, {
 		action: 'get_online'
 	},
