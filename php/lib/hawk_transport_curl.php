@@ -21,7 +21,7 @@ class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 	 */
 	public function send($data, $type)
 	{
-		$ch = curl_init($this->url);
+		$ch = curl_init(parent::$url);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_POST, 1);
 

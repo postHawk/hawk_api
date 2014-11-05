@@ -16,9 +16,10 @@ class hawk_api
 	 * конструктор
 	 * @param string $key API ключ
 	 */
-	public function __construct($key) 
+	public function __construct($key, $url)
 	{
 		$this->key = $key;
+		hawk_transport::set_url($url);
 		$this->transport = hawk_transport::get_transport();
 	}
 

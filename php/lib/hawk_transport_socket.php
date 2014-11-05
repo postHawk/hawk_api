@@ -24,13 +24,13 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 	{
 		$socket	 = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 
-		if(socket_connect($socket, $this->host, $this->port) === false)
+		if(socket_connect($socket, parent::$host, parent::$port) === false)
 		{
 			return false;
 		}
 
 		$in	 = "POST / HTTP/1.1\r\n";
-		$in .= "Host: {$this->host}\r\n";
+		$in .= "Host: " . parent::$host . "\r\n";
 		$in .= "Origin: http://{$_SERVER['HTTP_HOST']}\r\n";
 		$in .= "Connection: keep-alive\r\n";
 		$in .= "Transport: sokets\r\n\r\n";

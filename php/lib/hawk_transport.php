@@ -4,9 +4,9 @@ namespace hawk_api;
 class hawk_transport
 {
 	private static $transport = null;
-	protected $host = '127.0.0.1';
-	protected $port = '2222';
-	protected $url = "http://post-hawk.com:2222";
+	protected static $host = null;
+	protected static $port = null;
+	protected static $url = null;
 
 	/**
 	 * конструктор
@@ -46,4 +46,15 @@ class hawk_transport
 		return self::$transport;
 	}
 
+	public static function set_url($url)
+	{
+		$parts = [];
+		if(!preg_match('/^http[s]{0,1}\:\/\/([a-z0-9.\-]+)\:([\d]{2,})$/', $url, $parts))
+		{
+			throw new Exception('Неверный формат адреса');
+		}
+		self::$url = $url;
+		self::$host = $parts[1];
+		self::$port = $parts[2];
+	}
 }
