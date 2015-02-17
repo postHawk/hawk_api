@@ -10,7 +10,7 @@ class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 	 */
 	public function __construct()
 	{
-		;
+		parent::__construct();
 	}
 
 	/**
@@ -21,15 +21,20 @@ class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 	 */
 	public function send($data, $type)
 	{
+		$json = '{' . $type . '}' . json_encode($data);
 		$ch = curl_init(parent::$url);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_POST, 1);
 
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array('{' . $type . '}' . json_encode($data)));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, [
+			('Origin: ' . $_SERVER['HTTP_HOST']),
+			('Transport: curl'),
+		]);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		$output = curl_exec($ch);       
 		
-		if(curl_exec($ch) === false)
+		if($output === false)
 		{
 		    throw new \Exception( 'Ошибка curl: ' . curl_error($ch));
 		}

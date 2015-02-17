@@ -61,16 +61,23 @@ class hawk_api
 	 * @param array $groups группы
 	 * @return string
 	 */
-	public function add_user_to_group($id, array $groups)
+	public function add_user_to_group($id, array $groups, array $on_domains = array())
 	{
-		if($this->check_id($id) && $this->check_group($groups))
+		if(!count($on_domains))
 		{
-			return $this->transport->send(array(
-				'key' => $this->key,
-				'id' => $id,
-				'groups' => $groups,
-			), 'add_in_groups');
+			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
+
+		$this->check_id($id);
+		$this->check_group($groups);
+		$this->check_domains($on_domains);
+
+		return $this->transport->send(array(
+			'key' => $this->key,
+			'id' => $id,
+			'groups' => $groups,
+			'domains' => $on_domains,
+		), 'add_in_groups');
 	}
 
 	/**
@@ -78,16 +85,24 @@ class hawk_api
 	 * @param array $groups группы
 	 * @return string
 	 */
-	public function remove_user_from_group($id, array $groups)
+	public function remove_user_from_group($id, array $groups, array $on_domains = array())
 	{
-		if($this->check_id($id) && $this->check_group($groups))
+		if(!count($on_domains))
 		{
-			return $this->transport->send(array(
-				'key' => $this->key,
-				'id' => $id,
-				'groups' => $groups,
-			), 'remove_from_groups');
+			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
+
+		$this->check_id($id);
+		$this->check_group($groups);
+		$this->check_domains($on_domains);
+
+		return $this->transport->send(array(
+			'key' => $this->key,
+			'id' => $id,
+			'groups' => $groups,
+			'domains' => $on_domains,
+		), 'remove_from_groups');
+
 	}
 
 	/**
@@ -95,15 +110,21 @@ class hawk_api
 	 * @param array $groups
 	 * @return string JSON
 	 */
-	public function get_user_by_group(array $groups)
+	public function get_user_by_group(array $groups, array $on_domains = array())
 	{
-		if($this->check_group($groups))
+		if(!count($on_domains))
 		{
-			return $this->transport->send(array(
-				'key' => $this->key,
-				'groups' => $groups,
-			), 'get_by_group');
+			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
+
+		$this->check_group($groups);
+		$this->check_domains($on_domains);
+		
+		return $this->transport->send(array(
+			'key' => $this->key,
+			'groups' => $groups,
+			'domains' => $on_domains,
+		), 'get_by_group');
 	}
 
 	/**
@@ -114,18 +135,25 @@ class hawk_api
 	 * @param mixed $time время в любом формате
 	 * @return string
 	 */
-	public function seng_group_message($from, $text, array $groups, $time = false)
+	public function seng_group_message($from, $text, array $groups, array $on_domains = array(), $time = false)
 	{
-		if($this->check_id($from) && $this->check_group($groups))
+		if(!count($on_domains))
 		{
-			return $this->transport->send(array(
-				'key' => $this->key,
-				'from' => $from,
-				'time' => $time,
-				'text' => $text,
-				'groups' => $groups,
-			), 'send_group_message');
+			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
+
+		$this->check_id($from);
+		$this->check_group($groups);
+		$this->check_domains($on_domains);
+
+		return $this->transport->send(array(
+			'key' => $this->key,
+			'from' => $from,
+			'time' => $time,
+			'text' => $text,
+			'groups' => $groups,
+			'domains' => $on_domains,
+		), 'send_group_message');
 	}
 
 	/**
@@ -147,9 +175,19 @@ class hawk_api
 	{
 		foreach ($groups as $group)
 		{
-			if(!$this->check_id($group))
+			$this->check_id($group);
+		}
+
+		return true;
+	}
+	
+	private function check_domains($domains)
+	{
+		foreach ($domains as $domain)
+		{
+			if(!preg_match('/^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/', $domain))
 			{
-				throw new \Exception('Неверный формат идентификатора группы');
+				throw new \Exception('Неверный формат домена');
 			}
 		}
 

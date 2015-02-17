@@ -37,7 +37,8 @@ var HAWK_API = {
 		invalid_login_data: 'Не верный логин получателя',
 		send_message_yourself: 'Нельзя отправить сообщение самому себе',
 		invalid_login_format: 'Неверный формат идентификатора',
-		domain_not_register: 'Данный домен не зарегистрирован в системе'
+		domain_not_register: 'Данный домен не зарегистрирован в системе',
+		user_not_online: 'Пользователь не в сети'
 	},
 	/**
 	 * необходимость переинициализации
@@ -108,7 +109,7 @@ var HAWK_API = {
 	 */
 	send_message: function(msg) {
 		this.ws.socket.send(msg);
-		$(HAWK_API).trigger('hawk.msg_sended');
+		$(HAWK_API).trigger('hawk.msg_sended', msg);
 	},
 	/**
 	 * метод устанавливает текущего пользователя

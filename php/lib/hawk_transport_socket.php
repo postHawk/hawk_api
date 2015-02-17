@@ -29,12 +29,14 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 			return false;
 		}
 
+		$json = '{' . $type . '}' . json_encode($data);
+
 		$in	 = "POST / HTTP/1.1\r\n";
 		$in .= "Host: " . parent::$host . "\r\n";
 		$in .= "Origin: http://{$_SERVER['HTTP_HOST']}\r\n";
 		$in .= "Connection: keep-alive\r\n";
 		$in .= "Transport: sokets\r\n\r\n";
-		$in .= '{' . $type . '}' . json_encode($data);
+		$in .= $json;
 		$out = '';
 
 		if(socket_write($socket, $in, strlen($in)) === false)
