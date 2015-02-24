@@ -21,7 +21,15 @@ var HAWK_API = {
 		 * id пользователя
 		 * @type string
 		 */
-		user_id: false
+		user_id: false,
+		/**
+		 * Шифровать передаваемые сообщения.
+		 * @type Boolean
+		 */
+		encryption: {
+			enabled: false,
+			salt: 'a;dfasfkkAS%fasjas324df4F!as'
+		}
 	},
 	/**
 	 * преобразование ошибок сервиса в строки
@@ -58,7 +66,7 @@ var HAWK_API = {
 		{
 			if(!!WebSocket)
 			{
-				this.settings = $.extend(this.settings, opt);
+				this.settings = $.extend(true, this.settings, opt);
 
 				if(!this.settings.user_id)
 				{
@@ -108,9 +116,88 @@ var HAWK_API = {
 	 * @returns {void}
 	 */
 	send_message: function(msg) {
+		msg.from = this.get_user_id();
+		msg.action = msg.action || 'send_message';
+		msg.domains = msg.domains || [document.location.host];
+
+		if(this.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
+				&& typeof CryptoJS.AES !== 'undefined' && typeof CryptoJS.enc.Base64 !== 'undefined'
+				&& msg.hasOwnProperty('text') && msg.text !== '')
+		{
+			msg.text = CryptoJS
+					.AES.encrypt(msg.text, this.settings.encryption.salt, { format: HAWK_API })
+					.toString();
+		}
+
+		if(typeof msg == 'object')
+		{
+			msg = JSON.stringify(msg);
+		}
+
 		this.ws.socket.send(msg);
 		$(HAWK_API).trigger('hawk.msg_sended', msg);
 	},
+	/**
+	 * Получение списка публичных групп.
+	 * @param {array} domains
+	 * @returns {void}
+	 */
+	get_group_list: function(domains) {
+		domains = domains || [document.location.host];
+		var msg = {
+			from: this.get_user_id(),
+			domains: domains,
+			action: 'get_group_list'
+		};
+
+		this.send_message(msg);
+	},
+	/**
+	 * Добавление пользователя в группы
+	 * создание новых групп происходит автоматически.
+	 * Группа создаётся с публичным доступом
+	 *
+	 * @param {array} groups
+	 * @param {array} domains
+	 * @returns {void}
+	 */
+	add_user_to_group: function(groups, domains) {
+		domains = domains || [document.location.host];
+		if(typeof groups == 'object' && groups.length)
+		{
+			var msg = {
+				id: this.get_user_id(),
+				groups: groups,
+				domains: domains,
+				action: 'add_in_groups'
+			};
+
+			this.send_message(msg);
+		}
+	},
+	/**
+	 * Удаление пользователя из группы.
+	 * Пустые группы удаляются автоматически.
+	 *
+	 * @param {array} groups
+	 * @param {array} domains
+	 * @returns {undefined}
+	 */
+	remove_user_from_group: function(groups, domains) {
+		domains = domains || [document.location.host];
+		if(typeof groups == 'object' && groups.length)
+		{
+			var msg = {
+				id: this.get_user_id(),
+				groups: groups,
+				domains: domains,
+				action: 'remove_from_groups'
+			};
+
+			this.send_message(msg);
+		}
+	},
+
 	/**
 	 * метод устанавливает текущего пользователя
 	 * @returns {void}
@@ -199,6 +286,14 @@ var HAWK_API = {
 		try
 		{
 			var data = JSON.parse(e.data);
+			if(HAWK_API.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
+				&& typeof CryptoJS.AES !== 'undefined' && typeof CryptoJS.enc.Base64 !== 'undefined'
+				&& data.hasOwnProperty('text') && data.text !== '')
+			{
+				data.text = CryptoJS
+						.AES.decrypt(data.text, HAWK_API.settings.encryption.salt, { format: HAWK_API })
+						.toString(CryptoJS.enc.Utf8);
+			}
 			$(HAWK_API).trigger('hawk.message', [data]);
 //			console.log(data);
 		}
@@ -248,5 +343,42 @@ var HAWK_API = {
 	 */
 	print_error: function(text){
 		console.error(text);
+	},
+	stringify: function (cipherParams) {
+		// create json object with ciphertext
+		var jsonObj = {
+			ct: cipherParams.ciphertext.toString(CryptoJS.enc.Base64)
+		};
+
+		// optionally add iv and salt
+		if (cipherParams.iv) {
+			jsonObj.iv = cipherParams.iv.toString();
+		}
+		if (cipherParams.salt) {
+			jsonObj.s = cipherParams.salt.toString();
+		}
+
+		// stringify json object
+		return JSON.stringify(jsonObj);
+	},
+
+	parse: function (jsonStr) {
+		// parse json string
+		var jsonObj = JSON.parse(jsonStr);
+
+		// extract ciphertext from json object, and create cipher params object
+		var cipherParams = CryptoJS.lib.CipherParams.create({
+			ciphertext: CryptoJS.enc.Base64.parse(jsonObj.ct)
+		});
+
+		// optionally extract iv and salt
+		if (jsonObj.iv) {
+			cipherParams.iv = CryptoJS.enc.Hex.parse(jsonObj.iv)
+		}
+		if (jsonObj.s) {
+			cipherParams.salt = CryptoJS.enc.Hex.parse(jsonObj.s)
+		}
+
+		return cipherParams;
 	}
 };
