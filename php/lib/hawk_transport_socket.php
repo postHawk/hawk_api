@@ -2,7 +2,7 @@
 
 namespace hawk_api;
 
-require_once 'i_hawk_transport.php';
+require_once __DIR__ . '/interface/i_hawk_transport.php';
 
 class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 {
@@ -11,7 +11,7 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 	 */
 	public function __construct()
 	{
-		;
+		parent::__construct();
 	}
 
 	/**

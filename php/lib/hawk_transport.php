@@ -31,7 +31,7 @@ class hawk_transport
 			}
 			else
 			{
-				throw new Exception('Невозможно создать транспорт, пожалуйста включите curl или sockets расширения');
+				throw new \Exception('Невозможно создать транспорт, пожалуйста включите curl или sockets расширения');
 			}
 			
 			$class = 'hawk_api\\hawk_transport_' . $transport;

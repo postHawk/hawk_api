@@ -3,14 +3,19 @@
 namespace hawk_api;
 
 require_once 'lib/hawk_transport.php';
+require_once 'lib/crypt.php';
 
 class hawk_api
 {
 
-	const ACCESS_ALL		 = 'all';
+	const ACCESS_ALL	 = 'all';
 	const ACCESS_PUBLIC	 = 'public';
-	const ACCESS_PRIVATE	 = 'private';
+	const ACCESS_PRIVATE = 'private';
 
+	/**
+	 * ключ для шифрования запросов
+	 * @var string
+	 */
 	private $key = null;
 
 	/**
@@ -18,15 +23,59 @@ class hawk_api
 	 * @var object hawk_transport_socket | hawk_transport_curl
 	 */
 	private $transport;
+
+	/**
+	 *
+	 * @var object crypt_aes256
+	 */
+	private $encryptor = null;
+
+	/**
+	 * состояние шифрования
+	 * @var boolean
+	 */
+	private $encryption = true;
+
+	/**
+	 * тип шифрования
+	 * @var string
+	 */
+	private $encryption_type = crypt::TYPE_AES256;
+
+	/**
+	 * спиоск возможных типов групп
+	 * @var array
+	 */
 	private $accesses = [
 		self::ACCESS_PUBLIC,
 		self::ACCESS_PRIVATE,
 		self::ACCESS_ALL,
 	];
+
+	/**
+	 * текущий стек задач
+	 * @var array
+	 */
 	private $stack		 = [];
+
+	/**
+	 * текущие ошибки
+	 * @var array
+	 */
 	private $errors		 = [];
+
+	/**
+	 * Последняя возникшая ошибка
+	 * @var array
+	 */
 	private $last_error	 = '';
+
+	/**
+	 * Массив результатов
+	 * @var array
+	 */
 	private $results = [];
+
 
 	/**
 	 * конструктор
@@ -187,6 +236,40 @@ class hawk_api
 	}
 
 	/**
+	 * Отпрвка сообщения конкретному пользователю
+	 * @param string $from от кого
+	 * @param string $to кому
+	 * @param mixed $text данные
+	 * @param array $on_domains на какие домены
+	 * @return boolean
+	 */
+	private function _send_message($from, $to, $text, array $on_domains = array())
+	{
+		if (!count($on_domains))
+		{
+			$on_domains[] = $_SERVER['HTTP_HOST'];
+		}
+
+		if ($this->check_id($to) && $this->check_id($from) && $this->check_domains($on_domains))
+		{
+			if($this->get_encryption())
+			{
+				$text = $this->get_encryptor()->encrypt($text);
+			}
+
+			return $this->transport->send(array(
+					'key'		 => $this->key,
+					'from'		 => $from,
+					'to'		 => $to,
+					'text'		 => $text,
+					'domains'	 => $on_domains,
+					), 'send_message');
+		}
+
+		return false;
+	}
+
+	/**
 	 * отправка сообщения пользователям группы / групп
 	 * @param string $from id пользователя от которого происходит рассылка
 	 * @param string $text текст сообщения
@@ -194,7 +277,7 @@ class hawk_api
 	 * @param mixed $time время в любом формате
 	 * @return string
 	 */
-	private function _seng_group_message($from, $text, array $groups, array $on_domains = array(), $time = false)
+	private function _seng_group_message($from, $text, array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
@@ -203,10 +286,15 @@ class hawk_api
 
 		if ($this->check_id($from) && $this->check_group($groups) && $this->check_domains($on_domains))
 		{
+
+			if($this->get_encryption())
+			{
+				$text = $this->get_encryptor()->encrypt($text);
+			}
+
 			return $this->transport->send(array(
 					'key'		 => $this->key,
 					'from'		 => $from,
-					'time'		 => $time,
 					'text'		 => $text,
 					'groups'	 => $groups,
 					'domains'	 => $on_domains,
@@ -375,6 +463,11 @@ class hawk_api
 		return true;
 	}
 
+	/**
+	 * Проверка допустимости типа группы
+	 * @param string $type
+	 * @return boolean
+	 */
 	private function check_type($type)
 	{
 		if (!in_array($type, $this->accesses))
@@ -386,26 +479,48 @@ class hawk_api
 		return true;
 	}
 
+	/**
+	 * Проверка наличия ошибок выполнения
+	 * @return boolean
+	 */
 	public function has_errors()
 	{
 		return !empty($this->errors);
 	}
 
+	/**
+	 * Получение ошибок выполнения
+	 * @return array
+	 */
 	public function get_errors()
 	{
 		return $this->errors;
 	}
 
+	/**
+	 * Добавить ошибку
+	 * @param string $method метод, сгенерировавший ошибку
+	 * @param string $text тексе ошибки
+	 */
 	private function set_error($method, $text)
 	{
 		$this->errors = [$method => $text];
 	}
 
+	/**
+	 * Возвращает результат выполнения запросов
+	 * @return array
+	 */
 	public function get_results()
 	{
 		return $this->results;
 	}
 
+	/**
+	 * Возвращает результат для одного метода
+	 * @param string $method название метода
+	 * @return array
+	 */
 	public function get_result($method)
 	{
 		$result = [];
@@ -420,6 +535,74 @@ class hawk_api
 		return $result;
 	}
 
+	/**
+	 * Включает/выключает шифрование
+	 * @param boolean $use
+	 * @return \hawk_api\hawk_api
+	 */
+	public function set_encryption($use)
+	{
+		$this->encryption = $use;
+		return $this;
+	}
+
+	/**
+	 * Возвращает текущее состояние шифрования
+	 * @return boolean
+	 */
+	public function get_encryption()
+	{
+		return $this->encryption;
+	}
+
+	/**
+	 * Устанавливает тип шифрования
+	 * @param string $type
+	 * @return \hawk_api\hawk_api
+	 */
+	public function set_encryption_type($type)
+	{
+		$this->encryption_type = $type;
+		return $this;
+	}
+
+	/**
+	 * DВозвращает тип шифрования
+	 * @return type
+	 */
+	public function get_encryption_type()
+	{
+		return $this->encryption_type;
+	}
+
+	/**
+	 * устанавливает соль для шифрования
+	 * @param type $salt
+	 * @return \hawk_api\hawk_api
+	 */
+	public function set_salt($salt)
+	{
+		$this->get_encryptor()->set_crypt_key($salt);
+		return $this;
+	}
+
+	/**
+	 * возвращает объект-шифровальщик
+	 * @return object crypt_aes256
+	 */
+	private function get_encryptor()
+	{
+		if(is_null($this->encryptor))
+		{
+			$this->encryptor = crypt::get_encryptor($this->get_encryption_type());
+		}
+
+		return $this->encryptor;
+	}
+
+	/**
+	 * очищает текущее состояние
+	 */
 	private function clear()
 	{
 		$this->errors		 = [];

@@ -27,7 +27,7 @@ var HAWK_API = {
 		 * @type Boolean
 		 */
 		encryption: {
-			enabled: false,
+			enabled: true,
 			salt: 'a;dfasfkkAS%fasjas324df4F!as'
 		}
 	},
@@ -125,7 +125,7 @@ var HAWK_API = {
 				&& msg.hasOwnProperty('text') && msg.text !== '')
 		{
 			msg.text = CryptoJS
-					.AES.encrypt(msg.text, this.settings.encryption.salt, { format: HAWK_API })
+					.AES.encrypt(JSON.stringify(msg.text), this.settings.encryption.salt, { format: HAWK_API })
 					.toString();
 		}
 
@@ -290,9 +290,9 @@ var HAWK_API = {
 				&& typeof CryptoJS.AES !== 'undefined' && typeof CryptoJS.enc.Base64 !== 'undefined'
 				&& data.hasOwnProperty('text') && data.text !== '')
 			{
-				data.text = CryptoJS
+				data.text = JSON.parse(CryptoJS
 						.AES.decrypt(data.text, HAWK_API.settings.encryption.salt, { format: HAWK_API })
-						.toString(CryptoJS.enc.Utf8);
+						.toString(CryptoJS.enc.Utf8));
 			}
 			$(HAWK_API).trigger('hawk.message', [data]);
 //			console.log(data);
@@ -344,6 +344,11 @@ var HAWK_API = {
 	print_error: function(text){
 		console.error(text);
 	},
+	/**
+	 * форматирование объекта для шифрования
+	 * @param {CryptoJS.lib.CipherParams} cipherParams
+	 * @returns {String}
+	 */
 	stringify: function (cipherParams) {
 		// create json object with ciphertext
 		var jsonObj = {
@@ -361,7 +366,11 @@ var HAWK_API = {
 		// stringify json object
 		return JSON.stringify(jsonObj);
 	},
-
+	/**
+	 * форматирование объекта для расшифровки
+	 * @param {object} jsonStr
+	 * @returns {CryptoJS.lib.CipherParams}
+	 */
 	parse: function (jsonStr) {
 		// parse json string
 		var jsonObj = JSON.parse(jsonStr);
