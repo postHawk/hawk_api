@@ -8,7 +8,7 @@ namespace hawk_api;
  */
 class crypt
 {
-	private $mcrypt_key = 'a3453fsdf564l546asdff6mas,.fma.S<Dfm';
+	private $crypt_key = 'a3453fsdf564l546asdff6mas,.fma.S<Dfm';
 
 	private static $encryptor = [];
 
@@ -20,7 +20,7 @@ class crypt
 	 */
 	public function get_crypt_key()
 	{
-		return $this->mcrypt_key;
+		return $this->crypt_key;
 	}
 
 	/**
@@ -29,7 +29,7 @@ class crypt
 	 */
 	public function set_crypt_key($key)
 	{
-		$this->mcrypt_key = $key;
+		$this->crypt_key = $key;
 	}
 
 	/**

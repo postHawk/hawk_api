@@ -28,7 +28,7 @@ var HAWK_API = {
 		 */
 		encryption: {
 			enabled: true,
-			salt: 'a;dfasfkkAS%fasjas324df4F!as'
+			salt: 'a3453fsdf564l546asdff6mas,.fma.S<Dfm'
 		}
 	},
 	/**
@@ -36,8 +36,7 @@ var HAWK_API = {
 	 * @type object
 	 */
 	errors2string:{
-		user_already_exists: 'Пользователь с таким идентификатором уже зарегистрирован в системе',
-		invalid_key: 'Неверный ключ апи',
+		invalid_api_key: 'Неверный ключ апи',
 		user_not_register: 'Пользователь с таким идентификатором не зарегистрирован в системе',
 		user_not_exists: 'Пользователь с таким идентификатором не найден',
 		invalid_format_data: 'Неверный фомат данных',
@@ -46,7 +45,10 @@ var HAWK_API = {
 		send_message_yourself: 'Нельзя отправить сообщение самому себе',
 		invalid_login_format: 'Неверный формат идентификатора',
 		domain_not_register: 'Данный домен не зарегистрирован в системе',
-		user_not_online: 'Пользователь не в сети'
+		user_not_online: 'Пользователь не в сети',
+		general_error: 'Общая ошибка сервера',
+		invalid_group_format: 'Неверный формат идентификатора группы',
+		access_denied_to_group: 'Доступ к группе запрещён'
 	},
 	/**
 	 * необходимость переинициализации
@@ -67,6 +69,12 @@ var HAWK_API = {
 			if(!!WebSocket)
 			{
 				this.settings = $.extend(true, this.settings, opt);
+
+				if(!('CryptoJS' in window))
+				{
+					this.settings.encryption.enabled = false;
+					console.warn('Отсутствует CryptoJS. Шифрование не возможно.')
+				}
 
 				if(!this.settings.user_id)
 				{

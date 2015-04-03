@@ -100,6 +100,12 @@ class hawk_api
 	public function execute()
 	{
 		$this->clear();
+
+		if($this->get_encryption() && !extension_loaded('openssl'))
+		{
+			throw new \Exception('Для использования функции шифрования сообщений необходимо активировать поддрежку openssl');
+		}
+
 		foreach ($this->stack as $call)
 		{
 
@@ -241,7 +247,7 @@ class hawk_api
 	 * @param string $to кому
 	 * @param mixed $text данные
 	 * @param array $on_domains на какие домены
-	 * @return boolean
+	 * @return string|boolean
 	 */
 	private function _send_message($from, $to, $text, array $on_domains = array())
 	{
@@ -274,8 +280,7 @@ class hawk_api
 	 * @param string $from id пользователя от которого происходит рассылка
 	 * @param string $text текст сообщения
 	 * @param array $groups группы куда послать сообщения
-	 * @param mixed $time время в любом формате
-	 * @return string
+	 * @return string|boolean
 	 */
 	private function _seng_group_message($from, $text, array $groups, array $on_domains = array())
 	{
@@ -615,7 +620,7 @@ class hawk_api
 	 */
 	public function __destruct()
 	{
-		;
+		
 	}
 
 }
