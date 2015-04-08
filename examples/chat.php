@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 require_once 'hawk_chat.php';
 hawk_chat::session_start();
 
-$chat = new hawk_chat('your key');
+$chat = new hawk_chat('your key', 'http://post-hawk.com:2222');
 
 $action = (isset($_POST['action']) ? $_POST['action'] : false);
 if($action)
@@ -19,7 +19,8 @@ else
 		var CONTROL_OBJ = {
 			user_id: \'' . $user['id'] . '\',
 			group_id: \'' . $chat->get_group_id() . '\',
-			user_login: \'' . $user['login'] . '\'
+			user_login: \'' . $user['login'] . '\',
+			server_url: \'ws://post-hawk.com:2222\'
 		};
 		</script>';
 }
@@ -31,8 +32,8 @@ else
 		<title></title>
 		<script type="text/javascript" src="js/jq.js"></script>
 		<script type="text/javascript" src="js/ui/jquery-ui.min.js"></script>
-		<script type="text/javascript" src="js/hawk_api.js"></script>
-		<script type="text/javascript" src="js/chat.js"></script>
+		<script type="text/javascript" src="../js/hawk_api.js"></script>
+		<script type="text/javascript" src="../js/chat.js"></script>
 		<link rel="stylesheet" type="text/css" href="js/ui/jquery-ui.min.css"/>
 		<link rel="stylesheet" type="text/css" href="js/ui/jquery-ui.structure.min.css"/>
 		<link rel="stylesheet" type="text/css" href="js/ui/jquery-ui.theme.min.css"/>
@@ -53,9 +54,9 @@ else
 
 	</head>
 
-	<body style="margin: 0px; padding: 0px; position: absolute;">
-		<div id="wrapper" style="position: fixed; width: 100%; height: 100%;z-index: 2;">
-			<div id="chat" style="position: absolute; bottom: 0px; right: 0px; width: 400px; height: 300px; border: 5px solid #569bd8; border-radius: 5px; background-color: white;">
+	<body style="margin: 0px; padding: 0px; position: absolute;height:100%">
+		<div id="wrapper" style="position: fixed; width: 100%; height: 100%;">
+			<div id="chat" style="position: absolute; bottom: 0px; right: 0px; width: 400px; height: 300px; border: 5px solid #569bd8; border-radius: 5px; background-color: white;z-index: 2;">
 				<div id="header" style="text-align: center; position: relative; height: 20px; top: 0px;border-bottom: 3px solid #569bd8; background-color: #aecde7">
 					<span style="padding: 2px;">Hawk chat</span>
 				</div>
@@ -74,7 +75,7 @@ else
 				</div>
 			</div>
 		</div>
-		<div id="action_log" style="z-index: 1; width: 500px; height: 500px; position: absolute; overflow: auto; border: 3px solid black; border-radius: 5px;">
+		<div id="action_log" style="z-index: 1; width: 500px; height:100%; position: absolute; overflow: auto; border: 3px solid black; border-radius: 5px;">
 			Лог<br>
 		</div>
 	</body>

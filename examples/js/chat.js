@@ -5,11 +5,12 @@ $(document).ready(function () {
 		add_log('<span style="color: green"><b>соединение с сервером установлено</b></span>');
 	});
 	HAWK_API.bind_handler('hawk.msg_sended', function (e, msg) {
-		add_log('<span style="color: blue"><b>сообщение отправлено</b></span>');
+		add_log('<span style="color: blue"><b>сообщение ' + JSON.stringify(msg) + ' отправлено</b></span>');
 	});
 	HAWK_API.bind_handler('hawk.message', function (e, msg) {
-		add_log('<span style="color: blue"><b>поступило новое сообщение</b></span>');
-		var date = new Date(msg.time*1000);
+		add_log('<span style="color: blue"><b>поступило новое сообщение: ' + JSON.stringify(msg) + '</b></span>');
+		window.console.debug(msg);
+		var date = new Date(msg.text.time*1000);
 		$("#messages").append('<div><small>['
 				+ date.getDate() + '.'
 				+ date.getMonth() + '.'
@@ -29,7 +30,7 @@ $(document).ready(function () {
 	});
 
 	//делаем окошко перетаскиваемым
-	$('#chat').draggable({containment: "#wrapper_chat",
+	$('#chat').draggable({containment: "#wrapper",
 		scroll: false,
 		handle: "#header"});
 
@@ -54,17 +55,16 @@ $(document).ready(function () {
 			if (text.trim() !== '')
 			{
 				$('#out_text').html('');
-				var m = JSON.stringify({
-					time: Math.floor(new Date / 1000),
-					from: HAWK_API.get_user_id(),
+				var m = {
 					to: {
 						group: [CONTROL_OBJ.group_id]
 					},
 					text: {
 						from_login: CONTROL_OBJ.user_login,
-						message: text
+						message: text,
+						time: Math.floor(new Date / 1000),
 					}
-				});
+				};
 
 				HAWK_API.send_message(m);
 			}

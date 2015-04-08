@@ -1,14 +1,15 @@
 <?php
-require_once 'php/hawk_api.php';
-require_once 'php/lib/db/db.php';
+require_once __DIR__ . '/../php/hawk_api.php';
+require_once __DIR__ . '/db/db.php';
 
+use hawk_api\hawk_api;
 
 /**
  * Простейший класс чата
  *
  * @author mbarulin@gmail.com
  */
-class hawk_chat extends hawk_api\hawk_api
+class hawk_chat extends hawk_api
 {
 	/**
 	 * текущий юзер
@@ -36,9 +37,9 @@ class hawk_chat extends hawk_api\hawk_api
 	 * конструктор
 	 * @param string $key ключ апи
 	 */
-	public function __construct($key)
+	public function __construct($key, $url)
 	{
-		parent::__construct($key);
+		parent::__construct($key, $url);
 		$this->set_group_id(md5('hawk_chat'));
 		
 		((isset($_SESSION['hawk_user']['setted'])) ? $this->get_user() : $this->set_user());
@@ -78,20 +79,15 @@ class hawk_chat extends hawk_api\hawk_api
 	{
 		$id = md5(session_id());
 
-		//регистрируем пользователя в сервисе
-		$res = $this->register_user($id);
-		if($res != 'ok')
-		{
-			session_destroy();
-			throw new Exception('Ошибка регистрации пользователя: ' . $res);
-		}
+		//регистрируем пользователя в сервисе и добавляем в группу
+		$this->register_user($id)
+			->add_user_to_group($id, array($this->get_group_id()))
+			->execute();
 
-		//добавляем пользователя в группу
-		$res = $this->add_user_to_group($id, array($this->get_group_id()));
-		if($res != 'ok')
+		if($this->has_errors())
 		{
 			session_destroy();
-			throw new Exception('Ошибка добавления пользователя в группу: ' . $res);
+			throw new Exception('Ошибка регистрации пользователя: ' . print_r($this->get_errors(), 1));
 		}
 
 		$_SESSION['hawk_user']['setted'] = 1;
@@ -131,7 +127,9 @@ class hawk_chat extends hawk_api\hawk_api
 	public function get_online()
 	{
 		//получаем пользователей из сервиса
-		$list = json_decode($this->get_user_by_group(array($this->get_group_id())));
+		$this->get_user_by_group(array($this->get_group_id()))->execute();
+		$list = json_decode($this->get_result('get_user_by_group')[0], true);
+
 		$db_list = db::getInstance()->to_query('select * from user_to_login');
 
 		//так как сервис вернёт нам id пользователей, то преобразуем их в логины
@@ -141,9 +139,9 @@ class hawk_chat extends hawk_api\hawk_api
 		{
 			foreach ($db_list as $num => $rec)
 			{
-				if($rec['USER_ID'] == $value->user)
+				if($rec['USER_ID'] == $value['user'])
 				{
-					$list[$key]->login = $rec['LOGIN'];
+					$list[$key]['login'] = $rec['LOGIN'];
 					unset($db_list[$num]);
 					break;
 				}
@@ -203,8 +201,6 @@ class hawk_chat extends hawk_api\hawk_api
 	{
 		$this->group_id = $id;
 	}
-
-
 
 	/**
 	 * метод проверки логина пользователя

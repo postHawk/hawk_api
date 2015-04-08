@@ -80,6 +80,7 @@ class hawk_api
 	/**
 	 * конструктор
 	 * @param string $key API ключ
+	 * @param string $url адрес сервиса в формате http://url:port
 	 */
 	public function __construct($key, $url)
 	{
@@ -534,7 +535,7 @@ class hawk_api
 			$m = key($call);
 			if ($m == $method)
 			{
-				$result[] = $call;
+				$result[] = $call[$method];
 			}
 		}
 		return $result;
