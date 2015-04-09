@@ -9,7 +9,6 @@ $(document).ready(function () {
 	});
 	HAWK_API.bind_handler('hawk.message', function (e, msg) {
 		add_log('<span style="color: blue"><b>поступило новое сообщение: ' + JSON.stringify(msg) + '</b></span>');
-		window.console.debug(msg);
 		var date = new Date(msg.text.time*1000);
 		$("#messages").append('<div><small>['
 				+ date.getDate() + '.'

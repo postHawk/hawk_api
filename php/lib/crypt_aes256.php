@@ -37,7 +37,7 @@ class crypt_aes256 extends crypt implements i_crypt
 			$encrypted_data	 = openssl_encrypt(json_encode($text), self::AES256, $key, true, $iv);
 			$data			 = array("ct" => base64_encode($encrypted_data), "iv" => bin2hex($iv), "s" => bin2hex($salt));
 		}
-		catch (Exception $exc)
+		catch (\Exception $exc)
 		{
 			echo $exc->getMessage();
 			echo $exc->getTraceAsString();

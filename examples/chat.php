@@ -32,6 +32,7 @@ else
 		<title></title>
 		<script type="text/javascript" src="js/jq.js"></script>
 		<script type="text/javascript" src="js/ui/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="../js/encryption/aes.js"></script>
 		<script type="text/javascript" src="../js/hawk_api.js"></script>
 		<script type="text/javascript" src="../js/chat.js"></script>
 		<link rel="stylesheet" type="text/css" href="js/ui/jquery-ui.min.css"/>

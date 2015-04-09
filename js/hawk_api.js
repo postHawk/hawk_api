@@ -56,6 +56,12 @@ var HAWK_API = {
 	 */
 	reinitialization: false,
 
+	/**
+	 * Инициализирован ли уже чат
+	 * @type Boolean
+	 */
+	initialized: false,
+
 /**
  * метод инициализации подключения
  * @param {object} opt массив настроек
@@ -99,6 +105,8 @@ var HAWK_API = {
 				this.print_error('Технология не поддерживается');
 				return false;
 			}
+
+			this.initialized = true;
 		}
 
 		//создаём подключение

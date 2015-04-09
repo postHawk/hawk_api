@@ -51,7 +51,7 @@ class hawk_transport
 		$parts = [];
 		if(!preg_match('/^http[s]{0,1}\:\/\/([a-z0-9.\-]+)\:([\d]{2,})$/', $url, $parts))
 		{
-			throw new Exception('Неверный формат адреса');
+			throw new \Exception('Неверный формат адреса');
 		}
 		self::$url = $url;
 		self::$host = $parts[1];
