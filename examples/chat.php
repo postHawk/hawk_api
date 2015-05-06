@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 require_once 'hawk_chat.php';
 hawk_chat::session_start();
 
-$chat = new hawk_chat('your key', 'http://post-hawk.com:2222');
+$chat = new hawk_chat('your key', 'https://post-hawk.com:2222');
 
 $action = (isset($_POST['action']) ? $_POST['action'] : false);
 if($action)
@@ -20,7 +20,7 @@ else
 			user_id: \'' . $user['id'] . '\',
 			group_id: \'' . $chat->get_group_id() . '\',
 			user_login: \'' . $user['login'] . '\',
-			server_url: \'ws://post-hawk.com:2222\'
+			server_url: \'wss://post-hawk.com:2222\'
 		};
 		</script>';
 }

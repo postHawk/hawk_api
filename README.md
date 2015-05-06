@@ -1,8 +1,8 @@
-# API FOR SERVICE [POST HAWK](http://post-hawk.com)
+# API FOR SERVICE [POST HAWK](https://post-hawk.com)
 
 Для того, чтобы воспользоваться услугами сервиса Вам необходимо сделать три шага.
 
-1. [Зарегистрироваться](http://post-hawk.com/auth/)
+1. [Зарегистрироваться](https://post-hawk.com/auth/)
 1. Добавить домен (ы) в настройках учётной записи
 1. Скачать и подключить файлы апи.
 
