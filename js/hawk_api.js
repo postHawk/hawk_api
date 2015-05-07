@@ -27,7 +27,7 @@ var HAWK_API = {
 		 * @type Boolean
 		 */
 		encryption: {
-			enabled: true,
+			enabled: false,
 			salt: 'a3453fsdf564l546asdff6mas,.fma.S<Dfm'
 		}
 	},

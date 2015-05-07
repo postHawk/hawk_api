@@ -34,7 +34,7 @@ class hawk_api
 	 * состояние шифрования
 	 * @var boolean
 	 */
-	private $encryption = true;
+	private $encryption = false;
 
 	/**
 	 * тип шифрования
