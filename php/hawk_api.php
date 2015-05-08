@@ -121,7 +121,15 @@ class hawk_api
 				}
 				else
 				{
-					$this->results[] = [$method => $result];
+					if($result['error'] === false)
+					{
+						$this->results[] = [$method => $result];
+					}
+					else
+					{
+						$this->last_error = $result['error'];
+						$this->set_error($method, $result['error']);
+					}
 				}
 			}
 

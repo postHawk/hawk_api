@@ -137,7 +137,7 @@ var HAWK_API = {
 	 */
 	send_message: function(msg) {
 		msg.from = this.get_user_id();
-		msg.action = msg.action || 'send_message';
+		msg.hawk_action = msg.action || 'send_message';
 		msg.domains = msg.domains || [document.location.host];
 
 		if(this.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
@@ -303,9 +303,10 @@ var HAWK_API = {
 	 * @returns {void}
 	 */
 	on_message: function(e){
-		try
+		var data = JSON.parse(e.data);
+
+		if(data.error === false)
 		{
-			var data = JSON.parse(e.data);
 			if(HAWK_API.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
 				&& typeof CryptoJS.AES !== 'undefined' && typeof CryptoJS.enc.Base64 !== 'undefined'
 				&& data.hasOwnProperty('text') && data.text !== '')
@@ -314,15 +315,20 @@ var HAWK_API = {
 						.AES.decrypt(data.text, HAWK_API.settings.encryption.salt, { format: HAWK_API })
 						.toString(CryptoJS.enc.Utf8));
 			}
-			$(HAWK_API).trigger('hawk.message', [data]);
+
+			var event_type = 'hawk.message';
+			if(data.hasOwnProperty('from') && data.from === 'hawk_server')
+			{
+				event_type = 'hawk.server_message';
+			}
+			
+			$(HAWK_API).trigger(event_type, [data]);
 //			console.log(data);
 		}
-		catch (ex)
+		else
 		{
-//			console.log(e.data);
+			HAWK_API.check_on_error(data.error);
 		}
-
-		HAWK_API.check_on_error(e.data);
 
 	},
 	/**

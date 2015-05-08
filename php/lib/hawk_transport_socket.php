@@ -22,6 +22,11 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 	 */
 	public function send($data, $type)
 	{
+		if(!isset($data['hawk_action']))
+		{
+			$data['hawk_action'] = $type;
+		}
+
 		$socket	 = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 
 		if(socket_connect($socket, parent::$host, parent::$port) === false)
@@ -29,7 +34,7 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 			return false;
 		}
 
-		$json = '{' . $type . '}' . json_encode($data);
+		$json = json_encode($data);
 
 		$in	 = "POST / HTTP/1.1\r\n";
 		$in .= "Host: " . parent::$host . "\r\n";
@@ -43,12 +48,15 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 		{
 			return false;
 		}
+		$output = '';
 		while ($out = socket_read($socket, 2048))
 		{
-			echo $out;
+			$output .= $out;
 		}
 
 		socket_close($socket);
+
+		return json_decode($output, true);
 	}
 
 }

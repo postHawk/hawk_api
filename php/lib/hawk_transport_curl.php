@@ -21,7 +21,11 @@ class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 	 */
 	public function send($data, $type)
 	{
-		$json = '{' . $type . '}' . json_encode($data);
+		if(!isset($data['hawk_action']))
+		{
+			$data['hawk_action'] = $type;
+		}
+		$json = json_encode($data);
 		$ch = curl_init(parent::$url);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_POST, 1);
@@ -41,6 +45,6 @@ class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 
 		curl_close($ch);
 		
-		return $output;
+		return json_decode($output, true);
 	}
 }
