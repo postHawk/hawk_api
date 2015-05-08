@@ -331,7 +331,7 @@ var HAWK_API = {
 	 */
 	on_close: function(e){
 //		console.log('close');
-		if(e.code === 1006)
+		if(e.code === 1006 || e.code === 1015)
 		{
 			HAWK_API.fix_ssl();
 		}
