@@ -109,6 +109,10 @@ var HAWK_API = {
 			this.initialized = true;
 		}
 
+		if($('#hawk_fix_ssl').size())
+		{
+			$('#hawk_fix_ssl').remove();
+		}
 		//создаём подключение
 		HAWK_API.create_socket(HAWK_API.get_url());
 		return true;
@@ -325,11 +329,18 @@ var HAWK_API = {
 	 * дефолтный обработчик закрытия сокета
 	 * @returns {void}
 	 */
-	on_close: function(){
+	on_close: function(e){
 //		console.log('close');
+		if(e.code === 1006)
+		{
+			HAWK_API.fix_ssl();
+		}
+		else
+		{
+			setTimeout(HAWK_API.init, 30000);
+			$(HAWK_API).trigger('hawk.close');
+		}
 		HAWK_API.reinitialization = true;
-		setTimeout(HAWK_API.init, 30000);
-		$(HAWK_API).trigger('hawk.close');
 	},
 	/**
 	 * дефолтный обработчик ошибки сокета
@@ -405,5 +416,8 @@ var HAWK_API = {
 		}
 
 		return cipherParams;
+	},
+	fix_ssl: function(){
+		$('body').append('<iframe id="hawk_fix_ssl" onload="HAWK_API.init()" style="display: none" src="' + HAWK_API.settings.url.replace('wss', 'https') + '">');
 	}
 };
