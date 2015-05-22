@@ -121,7 +121,7 @@ class hawk_api
 				}
 				else
 				{
-					if($result['error'] === false)
+					if(!isset($result['error']) || $result['error'] === false)
 					{
 						$this->results[] = [$method => $result];
 					}

@@ -55,12 +55,25 @@ var HAWK_API = {
 	 * @type Boolean
 	 */
 	reinitialization: false,
-
 	/**
 	 * Инициализирован ли уже чат
 	 * @type Boolean
 	 */
 	initialized: false,
+	/**
+	 * Устновлено ли подключение с сервером
+	 * @type Boolean|Boolean
+	 */
+	id_setted: false,
+	/**
+	 * Очередь запросов
+	 * Из-за проблемы в хроме все запросы придётся делать синхронно
+	 * (если отправлять сразу пачку сообщений из одной вкладки хрома в другую, то из 10 до сервера доходит три)
+	 * @type Array
+	 */
+	queue: [],
+
+	in_process: false,
 
 /**
  * метод инициализации подключения
@@ -135,22 +148,37 @@ var HAWK_API = {
 	 * @param {object} msg
 	 * @returns {void}
 	 */
-	send_message: function(msg) {
-		msg.from = this.get_user_id();
-		msg.hawk_action = msg.action || 'send_message';
-		msg.domains = msg.domains || [document.location.host];
+	send_message: function(msg, sync) {
 
-		if(this.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
-				&& typeof CryptoJS.AES !== 'undefined' && typeof CryptoJS.enc.Base64 !== 'undefined'
-				&& msg.hasOwnProperty('text') && msg.text !== '')
+		if(typeof sync === 'undefined')
 		{
-			msg.text = CryptoJS
-					.AES.encrypt(JSON.stringify(msg.text), this.settings.encryption.salt, { format: HAWK_API })
-					.toString();
+			sync = true;
 		}
+
+		if(this.in_process && sync)
+		{
+			this.queue.push(msg);
+			return;
+		}
+
+		this.in_process = true;
 
 		if(typeof msg == 'object')
 		{
+			msg.from = this.get_user_id();
+			msg.hawk_action = msg.action || 'send_message';
+			delete msg.action;
+			msg.domains = msg.domains || [document.location.host];
+
+			if(this.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
+					&& typeof CryptoJS.AES !== 'undefined' && typeof CryptoJS.enc.Base64 !== 'undefined'
+					&& msg.hasOwnProperty('text') && msg.text !== '')
+			{
+				msg.text = CryptoJS
+						.AES.encrypt(JSON.stringify(msg.text), this.settings.encryption.salt, { format: HAWK_API })
+						.toString();
+			}
+
 			msg = JSON.stringify(msg);
 		}
 
@@ -162,15 +190,38 @@ var HAWK_API = {
 	 * @param {array} domains
 	 * @returns {void}
 	 */
-	get_group_list: function(domains) {
+	get_group_list: function(domains, event) {
 		domains = domains || [document.location.host];
+		event = event || 'get_group_list';
 		var msg = {
-			from: this.get_user_id(),
+			id: this.get_user_id(),
 			domains: domains,
-			action: 'get_group_list'
+			action: 'get_group_list',
+			event: event
 		};
 
 		this.send_message(msg);
+	},
+	get_users_by_group: function(groups, domains, event) {
+
+		if(groups.length)
+		{
+			domains = domains || [document.location.host];
+			event = event || 'get_by_group';
+			var msg = {
+				id: this.get_user_id(),
+				domains: domains,
+				groups: groups,
+				action: 'get_by_group',
+				event: event
+			};
+
+			this.send_message(msg);
+		}
+		else
+		{
+			this.print_error('Список групп должен быть не пустым массивом');
+		}
 	},
 	/**
 	 * Добавление пользователя в группы
@@ -181,15 +232,18 @@ var HAWK_API = {
 	 * @param {array} domains
 	 * @returns {void}
 	 */
-	add_user_to_group: function(groups, domains) {
+	add_user_to_group: function(groups, id, domains, event) {
 		domains = domains || [document.location.host];
+		event = event || 'add_in_groups';
+		id = id || this.get_user_id();
 		if(typeof groups == 'object' && groups.length)
 		{
 			var msg = {
-				id: this.get_user_id(),
+				id: id,
 				groups: groups,
 				domains: domains,
-				action: 'add_in_groups'
+				action: 'add_in_groups',
+				event: event
 			};
 
 			this.send_message(msg);
@@ -203,15 +257,18 @@ var HAWK_API = {
 	 * @param {array} domains
 	 * @returns {undefined}
 	 */
-	remove_user_from_group: function(groups, domains) {
+	remove_user_from_group: function(groups, id, domains, event) {
 		domains = domains || [document.location.host];
+		event = event || 'remove_from_groups';
+		id = id || this.get_user_id();
 		if(typeof groups == 'object' && groups.length)
 		{
 			var msg = {
-				id: this.get_user_id(),
+				id: id,
 				groups: groups,
 				domains: domains,
-				action: 'remove_from_groups'
+				action: 'remove_from_groups',
+				event: event
 			};
 
 			this.send_message(msg);
@@ -305,7 +362,7 @@ var HAWK_API = {
 	on_message: function(e){
 		var data = JSON.parse(e.data);
 
-		if(data.error === false)
+		if(!data.hasOwnProperty('error') || data.error === false)
 		{
 			if(HAWK_API.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
 				&& typeof CryptoJS.AES !== 'undefined' && typeof CryptoJS.enc.Base64 !== 'undefined'
@@ -321,13 +378,37 @@ var HAWK_API = {
 			{
 				event_type = 'hawk.server_message';
 			}
-			
+
 			$(HAWK_API).trigger(event_type, [data]);
+
+			if(!HAWK_API.id_setted)
+			{
+				HAWK_API.id_setted = true;
+				$(HAWK_API).trigger('hawk.initialized');
+			}
+
+			if(data.event)
+			{
+				if(data.event.search('hawk.') === -1)
+				{
+					data.event = 'hawk.' + data.event;
+				}
+				$(HAWK_API).trigger(data.event, [data]);
+			}
 //			console.log(data);
 		}
 		else
 		{
 			HAWK_API.check_on_error(data.error);
+		}
+
+		if(HAWK_API.queue.length)
+		{
+			HAWK_API.send_message(HAWK_API.queue.shift(), false);
+		}
+		else
+		{
+			HAWK_API.in_process = false;
 		}
 
 	},
