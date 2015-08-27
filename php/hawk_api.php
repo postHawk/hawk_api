@@ -82,7 +82,7 @@ class hawk_api
 	 * @param string $key API ключ
 	 * @param string $url адрес сервиса в формате http://url:port
 	 */
-	public function __construct($key, $url)
+	public function __construct($key, $url = 'https://post-hawk.com:2222')
 	{
 		$this->key		 = $key;
 		hawk_transport::set_url($url);
@@ -135,6 +135,8 @@ class hawk_api
 
 			unset($this->stack[$method]);
 		}
+
+		return $this;
 	}
 
 	/**
@@ -142,6 +144,12 @@ class hawk_api
 	 * @param string $id идентификатор пользователя
 	 * @return string
 	 */
+	public function register_user($id)
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _register_user($id)
 	{
 		if ($this->check_id($id))
@@ -160,6 +168,12 @@ class hawk_api
 	 * @param string $id идентификатор пользователя
 	 * @return string
 	 */
+	public function unregister_user($id)
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _unregister_user($id)
 	{
 		if ($this->check_id($id))
@@ -180,6 +194,12 @@ class hawk_api
 	 * @param array $groups группы
 	 * @return string
 	 */
+	public function add_user_to_group($id, array $groups, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _add_user_to_group($id, array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -206,6 +226,12 @@ class hawk_api
 	 * @param array $groups группы
 	 * @return string
 	 */
+	public function remove_user_from_group($id, array $groups, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _remove_user_from_group($id, array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -231,6 +257,12 @@ class hawk_api
 	 * @param array $groups
 	 * @return string JSON
 	 */
+	public function get_user_by_group(array $groups, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _get_user_by_group(array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -258,6 +290,12 @@ class hawk_api
 	 * @param array $on_domains на какие домены
 	 * @return string|boolean
 	 */
+	public function send_message($from, $to, $text, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _send_message($from, $to, $text, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -291,6 +329,12 @@ class hawk_api
 	 * @param array $groups группы куда послать сообщения
 	 * @return string|boolean
 	 */
+	public function seng_group_message($from, $text, array $groups, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _seng_group_message($from, $text, array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -324,6 +368,12 @@ class hawk_api
 	 * @param array $on_domains
 	 * @return string
 	 */
+	public function add_groups(array $groups, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _add_groups(array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -349,6 +399,12 @@ class hawk_api
 	 * @param array $on_domains
 	 * @return string
 	 */
+	public function remove_groups(array $groups, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _remove_groups(array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -373,6 +429,12 @@ class hawk_api
 	 * @return JSON
 	 * @throws \Exception
 	 */
+	public function get_group_list($type = self::ACCESS_ALL, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
 	private function _get_group_list($type = self::ACCESS_ALL, array $on_domains = array())
 	{
 		if (!count($on_domains))
@@ -381,7 +443,7 @@ class hawk_api
 		}
 
 		$this->check_domains($on_domains);
-		
+
 
 		if ($this->check_domains($on_domains) && $this->check_type($type))
 		{
@@ -629,7 +691,7 @@ class hawk_api
 	 */
 	public function __destruct()
 	{
-		
+
 	}
 
 }

@@ -16,7 +16,7 @@ var HAWK_API = {
 		 * адрес сервиса
 		 * @type string
 		 */
-		url: null,
+		url: 'wss://post-hawk.com:2222',
 		/**
 		 * id пользователя
 		 * @type string
@@ -74,6 +74,8 @@ var HAWK_API = {
 	queue: [],
 
 	in_process: false,
+	
+	last_error: null,
 
 /**
  * метод инициализации подключения
@@ -126,8 +128,12 @@ var HAWK_API = {
 		{
 			$('#hawk_fix_ssl').remove();
 		}
-		//создаём подключение
-		HAWK_API.create_socket(HAWK_API.get_url());
+		
+		if(!HAWK_API.last_error)
+		{
+			//создаём подключение
+			HAWK_API.create_socket(HAWK_API.get_url());
+		}
 		return true;
 
 	},
@@ -448,6 +454,7 @@ var HAWK_API = {
 			this.print_error(this.errors2string[msg]);
 			$(HAWK_API).trigger('hawk.server_error', [this.errors2string[msg]]);
 			HAWK_API.reinitialization = false;
+			HAWK_API.last_error = this.errors2string[msg];
 		}
 	},
 	/**
