@@ -62,27 +62,34 @@ var HAWK_API = {
 	initialized: false,
 	/**
 	 * Устновлено ли подключение с сервером
-	 * @type Boolean|Boolean
+	 * @type Boolean
 	 */
 	id_setted: false,
 	/**
 	 * Очередь запросов
 	 * Из-за проблемы в хроме все запросы придётся делать синхронно
-	 * (если отправлять сразу пачку сообщений из одной вкладки хрома в другую, то из 10 до сервера доходит три)
+	 * (если отправлять сразу пачку сообщений из одной вкладки хрома в другую, 
+	 * то из 10 до сервера доходит три)
 	 * @type Array
 	 */
 	queue: [],
-
+	/**
+	 * Состояние отправки сообщений
+	 * @type Boolean
+	 */
 	in_process: false,
-	
+	/**
+	 * Последняя возникшая ошибка
+	 * @type HAWK_API.errors2string
+	 */
 	last_error: null,
 
-/**
- * метод инициализации подключения
- * @param {object} opt массив настроек
- * @returns {Boolean}
- * @todo а нужно ли переподключение при ошибке?
- */
+	/**
+	 * метод инициализации подключения
+	 * @param {object} opt массив настроек
+	 * @returns {Boolean}
+	 * @todo а нужно ли переподключение при ошибке?
+	 */
 	init: function(opt) {
 		//если при подключении случилась ошибка, то пробуем переподключиться
 		if(!HAWK_API.reinitialization)
@@ -152,6 +159,7 @@ var HAWK_API = {
 	/**
 	 * метод отправки сообщения
 	 * @param {object} msg
+	 * @param {Boolean} sync синхронно или асинхронно отправлять сообщения
 	 * @returns {void}
 	 */
 	send_message: function(msg, sync) {
@@ -193,7 +201,8 @@ var HAWK_API = {
 	},
 	/**
 	 * Получение списка публичных групп.
-	 * @param {array} domains
+	 * @param {array} domains массив доменов для обработки
+	 * @param {string} event название события (по-умолчанию get_group_list)
 	 * @returns {void}
 	 */
 	get_group_list: function(domains, event) {
@@ -208,6 +217,13 @@ var HAWK_API = {
 
 		this.send_message(msg);
 	},
+	/**
+	 * Получение списка пользваоетелей по группам
+	 * @param {array} groups массив групп
+	 * @param {array} domains массив доменов для обработки
+	 * @param {string} event название события (по-умолчанию get_by_group)
+	 * @returns {void}
+	 */
 	get_users_by_group: function(groups, domains, event) {
 
 		if(groups.length)
@@ -234,8 +250,10 @@ var HAWK_API = {
 	 * создание новых групп происходит автоматически.
 	 * Группа создаётся с публичным доступом
 	 *
-	 * @param {array} groups
-	 * @param {array} domains
+	 * @param {array} groups массив групп
+	 * @param {string} id логин пользователя
+	 * @param {array} domains массив доменов для обработки
+	 * @param {string} event название события (по-умолчанию add_in_groups)
 	 * @returns {void}
 	 */
 	add_user_to_group: function(groups, id, domains, event) {
@@ -259,9 +277,11 @@ var HAWK_API = {
 	 * Удаление пользователя из группы.
 	 * Пустые группы удаляются автоматически.
 	 *
-	 * @param {array} groups
-	 * @param {array} domains
-	 * @returns {undefined}
+	 * @param {array} groups массив групп
+	 * @param {string} id id пользователя
+	 * @param {array} domains массив доменов для обработки
+	 * @param {string} event название события (по-умолчанию add_in_groups)
+	 * @returns {void}
 	 */
 	remove_user_from_group: function(groups, id, domains, event) {
 		domains = domains || [document.location.host];
@@ -311,7 +331,7 @@ var HAWK_API = {
 		return this.settings.user_id;
 	},
 	/**
-	 * возвращает url пользователя
+	 * возвращает url сервера
 	 * @returns {HAWK_API.settings.url}
 	 */
 	get_url: function () {
@@ -319,33 +339,38 @@ var HAWK_API = {
 	},
 	/**
 	 * привязка обработчиков к событию
-	 * @param {string} type
-	 * @param {function} fn
+	 * @param {string} type название события
+	 * @param {function} fn колбэк
 	 * @returns {void}
 	 */
 	bind_handler: function(type, fn){
+		if(type.search('hawk.') === -1)
+		{
+			type = 'hawk.' + type;
+		}
+		
 		$(this).on(type, fn);
 	},
 	/**
 	 * привязка дефолтных обработчиков к событию
-	 * @param {string} type
-	 * @param {function} fn
+	 * @param {string} type название события
+	 * @param {function} fn колбэк
 	 * @returns {void}
 	 */
 	bind_default_hadler: function(type, fn)
 	{
-		if(typeof this.ws.socket[type] == 'object')
+		if(typeof this.ws.socket[type] === 'object')
 		{
 			this.ws.socket[type] = fn;
 		}
 	},
 	/**
 	 * метод отвязывает обработчик события
-	 * @param {string} type
+	 * @param {string} type название события
 	 * @returns {void}
 	 */
 	unbind_handler: function(type){
-		if(typeof this.ws.socket[type] == 'object')
+		if(typeof this.ws.socket[type] === 'object')
 		{
 			this.ws.socket[type] = null;
 		}
@@ -355,7 +380,7 @@ var HAWK_API = {
 	 * @returns {void}
 	 */
 	on_open: function(){
-		//console.log('open');
+		
 		HAWK_API.reinitialization = false;
 		HAWK_API.ws.open = true;
 		$(HAWK_API).trigger('hawk.open');
@@ -467,7 +492,7 @@ var HAWK_API = {
 	},
 	/**
 	 * форматирование объекта для шифрования
-	 * @param {CryptoJS.lib.CipherParams} cipherParams
+	 * @param {CryptoJS.lib.CipherParams} cipherParams параметры шифрования
 	 * @returns {String}
 	 */
 	stringify: function (cipherParams) {
@@ -489,7 +514,7 @@ var HAWK_API = {
 	},
 	/**
 	 * форматирование объекта для расшифровки
-	 * @param {object} jsonStr
+	 * @param {string} jsonStr строка для расшифровки
 	 * @returns {CryptoJS.lib.CipherParams}
 	 */
 	parse: function (jsonStr) {
@@ -511,6 +536,13 @@ var HAWK_API = {
 
 		return cipherParams;
 	},
+	/**
+	 * Если обращение идёт не на стандартный порт ssl, 
+	 * то браузер не может через wss получить сертификат
+	 * и возникает ошибка. Чтобы восстановить сертификат нужно обратиться на
+	 * соответсвующий адрес напрямую.
+	 * @returns {void}
+	 */
 	fix_ssl: function(){
 		$('body').append('<iframe id="hawk_fix_ssl" onload="HAWK_API.init()" style="display: none" src="' + HAWK_API.settings.url.replace('wss', 'https') + '">');
 	}
