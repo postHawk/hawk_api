@@ -1,8 +1,13 @@
 <?php
 namespace hawk_api;
 
-require_once __DIR__ . '/interface/i_hawk_transport.php';
+require_once __DIR__ . '/../interface/i_hawk_transport.php';
 
+/**
+ * Класс реалзизующий отправку сообщений путём http запросов
+ * 
+ * @author Maxim Barulin <mbarulin@gmail.com>
+ */
 class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 {
 	/**

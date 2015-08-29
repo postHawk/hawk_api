@@ -2,9 +2,15 @@
 
 namespace hawk_api;
 
-require_once 'lib/hawk_transport.php';
-require_once 'lib/crypt.php';
+require_once 'lib/transport/hawk_transport.php';
+require_once 'lib/encryption/crypt.php';
 
+/**
+ * Класс предоставляющий api для обращения к 
+ * сервису Post Hawk
+ * 
+ * @author Maxim Barulin <mbarulin@gmail.com>
+ */
 class hawk_api
 {
 
@@ -191,7 +197,9 @@ class hawk_api
 	 * Добавление пользователя в группы
 	 * создание новых групп происходит автоматически.
 	 * Группа создаётся с публичным доступом
+	 * @param string $id id пользователя
 	 * @param array $groups группы
+	 * @param array $on_domains домены
 	 * @return string
 	 */
 	public function add_user_to_group($id, array $groups, array $on_domains = array())
@@ -223,7 +231,9 @@ class hawk_api
 	/**
 	 * Удаление пользователя из группы.
 	 * Пустые группы удаляются автоматически.
+	 * @param string $id id пользователя
 	 * @param array $groups группы
+	 * @param array $on_domains домены
 	 * @return string
 	 */
 	public function remove_user_from_group($id, array $groups, array $on_domains = array())
@@ -254,7 +264,8 @@ class hawk_api
 
 	/**
 	 * получение списка пользователей в группе или группах
-	 * @param array $groups
+	 * @param array $groups группы
+	 * @param array $on_domains домены
 	 * @return string JSON
 	 */
 	public function get_user_by_group(array $groups, array $on_domains = array())
@@ -327,6 +338,7 @@ class hawk_api
 	 * @param string $from id пользователя от которого происходит рассылка
 	 * @param string $text текст сообщения
 	 * @param array $groups группы куда послать сообщения
+	 * @param array $on_domains на какие домены
 	 * @return string|boolean
 	 */
 	public function seng_group_message($from, $text, array $groups, array $on_domains = array())
@@ -364,8 +376,8 @@ class hawk_api
 
 	/**
 	 * Добавляет группу
-	 * @param array $groups
-	 * @param array $on_domains
+	 * @param array $groups массив названий групп 
+	 * @param array $on_domains на какие домены
 	 * @return string
 	 */
 	public function add_groups(array $groups, array $on_domains = array())
@@ -395,8 +407,8 @@ class hawk_api
 
 	/**
 	 * Удаляет группу
-	 * @param array $groups
-	 * @param array $on_domains
+	 * @param array $groups массив названий групп 
+	 * @param array $on_domains на какие домены
 	 * @return string
 	 */
 	public function remove_groups(array $groups, array $on_domains = array())
@@ -424,8 +436,8 @@ class hawk_api
 
 	/**
 	 * Получение списка групп
-	 * @param type $type
-	 * @param array $on_domains
+	 * @param type $type тип группы (все, открытая или закрытая)
+	 * @param array $on_domains на какие домены
 	 * @return JSON
 	 * @throws \Exception
 	 */
@@ -459,8 +471,8 @@ class hawk_api
 
 	/**
 	 * Добавляет метод в очередь выполнения
-	 * @param type $method
-	 * @param type $params
+	 * @param type $method название метода
+	 * @param type $params параметры
 	 */
 	private function addStack($method, $params)
 	{
@@ -485,7 +497,7 @@ class hawk_api
 
 	/**
 	 * Проверка группы
-	 * @param array $groups
+	 * @param array $groups названия групп
 	 * @return boolean
 	 */
 	private function check_group($groups)
@@ -503,8 +515,8 @@ class hawk_api
 
 	/**
 	 * Проверка группы с правами
-	 * @param array $groups
-	 * @throws \Exception
+	 * @param array $groups названия групп
+	 * @return boolean
 	 */
 	private function check_group_acc($groups)
 	{
@@ -521,9 +533,8 @@ class hawk_api
 
 	/**
 	 * Проверка доменов
-	 * @param type $domains
+	 * @param array $domains домены
 	 * @return boolean
-	 * @throws \Exception
 	 */
 	private function check_domains($domains)
 	{
@@ -541,7 +552,7 @@ class hawk_api
 
 	/**
 	 * Проверка допустимости типа группы
-	 * @param string $type
+	 * @param string $type тип доступа
 	 * @return boolean
 	 */
 	private function check_type($type)
@@ -613,7 +624,7 @@ class hawk_api
 
 	/**
 	 * Включает/выключает шифрование
-	 * @param boolean $use
+	 * @param boolean $use использовать ли шифрование
 	 * @return \hawk_api\hawk_api
 	 */
 	public function set_encryption($use)
@@ -633,8 +644,8 @@ class hawk_api
 
 	/**
 	 * Устанавливает тип шифрования
-	 * @param string $type
-	 * @return \hawk_api\hawk_api
+	 * @param string $type тип шифрования. Пока поддерживается только AES256
+	 * @return \hawk_api\hawk_api5
 	 */
 	public function set_encryption_type($type)
 	{
@@ -653,7 +664,7 @@ class hawk_api
 
 	/**
 	 * устанавливает соль для шифрования
-	 * @param type $salt
+	 * @param type $salt соль
 	 * @return \hawk_api\hawk_api
 	 */
 	public function set_salt($salt)

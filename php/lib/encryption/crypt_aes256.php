@@ -1,15 +1,23 @@
 <?php
 namespace hawk_api;
 
-require_once __DIR__ . '/interface/i_crypt.php';
+require_once __DIR__ . '/../interface/i_crypt.php';
 
+/**
+ * Класс реализующий aes256 шифрование
+ * 
+ * @author Maxim Barulin <mbarulin@gmail.com>
+ */
 class crypt_aes256 extends crypt implements i_crypt
 {
+	/**
+	 * тип шифрования
+	 */
 	const AES256 = 'aes-256-cbc';
 
 	/**
 	 * Шифрование
-	 * @param string $text
+	 * @param string $text текст для шифрования
 	 * @return string
 	 */
 	public function encrypt($text)
@@ -49,7 +57,7 @@ class crypt_aes256 extends crypt implements i_crypt
 
 	/**
 	 * Дешифрование
-	 * @param string $jsonString
+	 * @param string $jsonString текст для расшифровки
 	 * @return string
 	 */
 	public function decrypt($jsonString)

@@ -2,16 +2,27 @@
 namespace hawk_api;
 
 /**
- * Description of crypt
+ * Корневой класс для создания объектов шифрования
  *
- * @author maximilian
+ * @author Maxim Barulin <mbarulin@gmail.com>
  */
 class crypt
 {
+	/**
+	 *
+	 * @var string ключ для шифрования 
+	 */
 	private $crypt_key = 'a3453fsdf564l546asdff6mas,.fma.S<Dfm';
 
+	/**
+	 *
+	 * @var i_crypt массив шифраторов
+	 */
 	private static $encryptor = [];
 
+	/**
+	 * Тип шифрования AES256
+	 */
 	const TYPE_AES256 = 'aes256';
 
 	/**
@@ -34,7 +45,7 @@ class crypt
 
 	/**
 	 * Возвращает объект шифровальщик заданного типа
-	 * @param type $type
+	 * @param type $type тип шифрования
 	 * @return object 
 	 * @throws \Exception
 	 */
@@ -53,6 +64,11 @@ class crypt
 			if(!class_exists($class))
 			{
 				require $file;
+			}
+			
+			if(!($class instanceof i_crypt))
+			{
+				throw new \Exception('Класс шифрования должен реализовывать интерфейс i_crypt');
 			}
 
 			self::$encryptor[$type] = new $class();

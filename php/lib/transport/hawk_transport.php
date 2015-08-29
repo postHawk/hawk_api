@@ -1,11 +1,33 @@
 <?php
 namespace hawk_api;
 
+/**
+ * Базовый класс транспортов. Отвечает за 
+ * отправку сообщений в сервис
+ * 
+ * @author Maxim Barulin <mbarulin@gmail.com>
+ */
 class hawk_transport
 {
+	/**
+	 *
+	 * @var i_hawk_transport текущий транспорт
+	 */
 	private static $transport = null;
+	/**
+	 *
+	 * @var string хост
+	 */
 	protected static $host = null;
+	/**
+	 *
+	 * @var string порт
+	 */
 	protected static $port = null;
+	/**
+	 *
+	 * @var string адрес
+	 */
 	protected static $url = null;
 
 	/**
@@ -16,6 +38,11 @@ class hawk_transport
 		;
 	}
 
+	/**
+	 * Снглтон для получения текущего объекта транспорта
+	 * @return i_hawk_transport
+	 * @throws \Exception
+	 */
 	public static final function get_transport()
 	{
 		if(is_null(self::$transport))
@@ -40,12 +67,22 @@ class hawk_transport
 				require 'hawk_transport_' . $transport . '.php';
 			}
 			
+			if(!($class instanceof i_hawk_transport))
+			{
+				throw new \Exception('Класс транспорта должен реализовывать интерфейс i_hawk_transport');
+			}
+			
 			self::$transport = new $class();
 		}
 		
 		return self::$transport;
 	}
 
+	/**
+	 * Устанавливает текущийй адрес сервиса
+	 * @param string $url адрес сервиса
+	 * @throws \Exception
+	 */
 	public static function set_url($url)
 	{
 		$parts = [];
