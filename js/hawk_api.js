@@ -1,30 +1,43 @@
+/**
+ * Объект для работы с сервисом Post Hawk
+ * @type {Object}
+ * @class
+ */
 var HAWK_API = {
+	/**
+	 * набор свойств открытого сокета
+	 * @type {Object} 
+	 */
 	ws: {
 		/**
 		 * текущий сокет
-		 * @type WebSocket
+		 * @type {WebSocket}
 		 */
 		socket: null,
 		/**
 		 * статус сокета
-		 * @type Boolean
+		 * @type {Boolean}
 		 */
 		open: false
 	},
+	/**
+	 * Набор основных свойств
+	 * @type {Object}
+	 */
 	settings: {
 		/**
 		 * адрес сервиса
-		 * @type string
+		 * @type {String}
 		 */
 		url: 'wss://post-hawk.com:2222',
 		/**
 		 * id пользователя
-		 * @type string
+		 * @type {String}
 		 */
 		user_id: false,
 		/**
 		 * Шифровать передаваемые сообщения.
-		 * @type Boolean
+		 * @type {Boolean}
 		 */
 		encryption: {
 			enabled: false,
@@ -33,7 +46,7 @@ var HAWK_API = {
 	},
 	/**
 	 * преобразование ошибок сервиса в строки
-	 * @type object
+	 * @type {Object}
 	 */
 	errors2string:{
 		invalid_api_key: 'Неверный ключ апи',
@@ -52,17 +65,17 @@ var HAWK_API = {
 	},
 	/**
 	 * необходимость переинициализации
-	 * @type Boolean
+	 * @type {Boolean}
 	 */
 	reinitialization: false,
 	/**
 	 * Инициализирован ли уже чат
-	 * @type Boolean
+	 * @type {Boolean}
 	 */
 	initialized: false,
 	/**
 	 * Устновлено ли подключение с сервером
-	 * @type Boolean
+	 * @type {Boolean}
 	 */
 	id_setted: false,
 	/**
@@ -70,23 +83,23 @@ var HAWK_API = {
 	 * Из-за проблемы в хроме все запросы придётся делать синхронно
 	 * (если отправлять сразу пачку сообщений из одной вкладки хрома в другую, 
 	 * то из 10 до сервера доходит три)
-	 * @type Array
+	 * @type {Array}
 	 */
 	queue: [],
 	/**
 	 * Состояние отправки сообщений
-	 * @type Boolean
+	 * @type {Boolean}
 	 */
 	in_process: false,
 	/**
 	 * Последняя возникшая ошибка
-	 * @type HAWK_API.errors2string
+	 * @type {HAWK_API.errors2string}
 	 */
 	last_error: null,
 
 	/**
 	 * метод инициализации подключения
-	 * @param {object} opt массив настроек
+	 * @param {Object} opt массив настроек
 	 * @returns {Boolean}
 	 * @todo а нужно ли переподключение при ошибке?
 	 */
@@ -146,7 +159,7 @@ var HAWK_API = {
 	},
 	/**
 	 * метод инициализирует подключение к сокету
-	 * @param {string} url адрес для подключения
+	 * @param {String} url адрес для подключения
 	 * @returns {void}
 	 */
 	create_socket: function(url){
@@ -158,7 +171,7 @@ var HAWK_API = {
 	},
 	/**
 	 * метод отправки сообщения
-	 * @param {object} msg
+	 * @param {Object} msg
 	 * @param {Boolean} sync синхронно или асинхронно отправлять сообщения
 	 * @returns {void}
 	 */
@@ -202,7 +215,7 @@ var HAWK_API = {
 	/**
 	 * Получение списка публичных групп.
 	 * @param {array} domains массив доменов для обработки
-	 * @param {string} event название события (по-умолчанию get_group_list)
+	 * @param {String} event название события (по-умолчанию get_group_list)
 	 * @returns {void}
 	 */
 	get_group_list: function(domains, event) {
@@ -221,7 +234,7 @@ var HAWK_API = {
 	 * Получение списка пользваоетелей по группам
 	 * @param {array} groups массив групп
 	 * @param {array} domains массив доменов для обработки
-	 * @param {string} event название события (по-умолчанию get_by_group)
+	 * @param {String} event название события (по-умолчанию get_by_group)
 	 * @returns {void}
 	 */
 	get_users_by_group: function(groups, domains, event) {
@@ -251,9 +264,9 @@ var HAWK_API = {
 	 * Группа создаётся с публичным доступом
 	 *
 	 * @param {array} groups массив групп
-	 * @param {string} id логин пользователя
+	 * @param {String} id логин пользователя
 	 * @param {array} domains массив доменов для обработки
-	 * @param {string} event название события (по-умолчанию add_in_groups)
+	 * @param {String} event название события (по-умолчанию add_in_groups)
 	 * @returns {void}
 	 */
 	add_user_to_group: function(groups, id, domains, event) {
@@ -278,9 +291,9 @@ var HAWK_API = {
 	 * Пустые группы удаляются автоматически.
 	 *
 	 * @param {array} groups массив групп
-	 * @param {string} id id пользователя
+	 * @param {String} id id пользователя
 	 * @param {array} domains массив доменов для обработки
-	 * @param {string} event название события (по-умолчанию add_in_groups)
+	 * @param {String} event название события (по-умолчанию add_in_groups)
 	 * @returns {void}
 	 */
 	remove_user_from_group: function(groups, id, domains, event) {
@@ -317,7 +330,7 @@ var HAWK_API = {
 	},
 	/**
 	 * проверка корректности логина пользователя
-	 * @param {string} id логин
+	 * @param {String} id логин
 	 * @returns {Boolean}
 	 */
 	check_user_id: function(id) {
@@ -339,7 +352,7 @@ var HAWK_API = {
 	},
 	/**
 	 * привязка обработчиков к событию
-	 * @param {string} type название события
+	 * @param {String} type название события
 	 * @param {function} fn колбэк
 	 * @returns {void}
 	 */
@@ -353,7 +366,7 @@ var HAWK_API = {
 	},
 	/**
 	 * привязка дефолтных обработчиков к событию
-	 * @param {string} type название события
+	 * @param {String} type название события
 	 * @param {function} fn колбэк
 	 * @returns {void}
 	 */
@@ -366,7 +379,7 @@ var HAWK_API = {
 	},
 	/**
 	 * метод отвязывает обработчик события
-	 * @param {string} type название события
+	 * @param {String} type название события
 	 * @returns {void}
 	 */
 	unbind_handler: function(type){
@@ -387,7 +400,7 @@ var HAWK_API = {
 	},
 	/**
 	 * дефолтный обработчик сообщения
-	 * @param {object}
+	 * @param {Object}
 	 * @returns {void}
 	 */
 	on_message: function(e){
@@ -470,7 +483,7 @@ var HAWK_API = {
 	},
 	/**
 	 * проверка сообщения на ошибки
-	 * @param {object|string} msg ответ сервиса
+	 * @param {Object|string} msg ответ сервиса
 	 * @returns {void}
 	 */
 	check_on_error: function(msg) {
@@ -484,7 +497,7 @@ var HAWK_API = {
 	},
 	/**
 	 * выводит сообщение об ошибке в консоль
-	 * @param {string} text
+	 * @param {String} text
 	 * @returns {void}
 	 */
 	print_error: function(text){
@@ -514,7 +527,7 @@ var HAWK_API = {
 	},
 	/**
 	 * форматирование объекта для расшифровки
-	 * @param {string} jsonStr строка для расшифровки
+	 * @param {String} jsonStr строка для расшифровки
 	 * @returns {CryptoJS.lib.CipherParams}
 	 */
 	parse: function (jsonStr) {
