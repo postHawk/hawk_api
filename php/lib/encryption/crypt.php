@@ -66,12 +66,12 @@ class crypt
 				require $file;
 			}
 			
-			if(!($class instanceof i_crypt))
+			self::$encryptor[$type] = new $class();
+			
+			if(!(self::$encryptor[$type] instanceof i_crypt))
 			{
 				throw new \Exception('Класс шифрования должен реализовывать интерфейс i_crypt');
 			}
-
-			self::$encryptor[$type] = new $class();
 		}
 
 		return self::$encryptor[$type];

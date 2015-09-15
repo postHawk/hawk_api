@@ -66,13 +66,15 @@ class hawk_transport
 			{
 				require 'hawk_transport_' . $transport . '.php';
 			}
+
+			self::$transport = new $class();
 			
-			if(!($class instanceof i_hawk_transport))
+			if(!(self::$transport instanceof i_hawk_transport))
 			{
 				throw new \Exception('Класс транспорта должен реализовывать интерфейс i_hawk_transport');
 			}
 			
-			self::$transport = new $class();
+			
 		}
 		
 		return self::$transport;
