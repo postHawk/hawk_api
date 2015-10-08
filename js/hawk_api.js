@@ -6,7 +6,7 @@
 var HAWK_API = {
 	/**
 	 * набор свойств открытого сокета
-	 * @type {Object} 
+	 * @type {Object}
 	 */
 	ws: {
 		/**
@@ -42,7 +42,8 @@ var HAWK_API = {
 		encryption: {
 			enabled: false,
 			salt: 'a3453fsdf564l546asdff6mas,.fma.S<Dfm'
-		}
+		},
+		debug: false
 	},
 	/**
 	 * преобразование ошибок сервиса в строки
@@ -61,6 +62,7 @@ var HAWK_API = {
 		user_not_online: 'Пользователь не в сети',
 		general_error: 'Общая ошибка сервера',
 		invalid_group_format: 'Неверный формат идентификатора группы',
+		invalid_group_count: 'Группа должна быть не пустым массивом',
 		access_denied_to_group: 'Доступ к группе запрещён'
 	},
 	/**
@@ -81,7 +83,7 @@ var HAWK_API = {
 	/**
 	 * Очередь запросов
 	 * Из-за проблемы в хроме все запросы придётся делать синхронно
-	 * (если отправлять сразу пачку сообщений из одной вкладки хрома в другую, 
+	 * (если отправлять сразу пачку сообщений из одной вкладки хрома в другую,
 	 * то из 10 до сервера доходит три)
 	 * @type {Array}
 	 */
@@ -148,7 +150,7 @@ var HAWK_API = {
 		{
 			$('#hawk_fix_ssl').remove();
 		}
-		
+
 		if(!HAWK_API.last_error)
 		{
 			//создаём подключение
@@ -174,6 +176,7 @@ var HAWK_API = {
 	 * @param {Object} msg
 	 * @param {Boolean} sync синхронно или асинхронно отправлять сообщения
 	 * @returns {void}
+	 * @todo вынести парасетр синхронной работы в конфиг
 	 */
 	send_message: function(msg, sync) {
 
@@ -231,6 +234,28 @@ var HAWK_API = {
 		this.send_message(msg);
 	},
 	/**
+	 * Получение списка публичных групп одного пользовтаеля
+	 *
+	 * @param {String} id логин пользователя
+	 * @param {array} domains массив доменов для обработки
+	 * @param {String} event название события (по-умолчанию add_in_groups)
+	 * @returns {void}
+	 */
+	get_groups_by_user: function(id, domains, event) {
+		domains = domains || [document.location.host];
+		event = event || 'get_group_by_simple_user';
+		id = id || this.get_user_id();
+
+		var msg = {
+			id: id,
+			domains: domains,
+			action: 'get_group_by_simple_user',
+			event: event
+		};
+
+		this.send_message(msg);
+	},
+	/**
 	 * Получение списка пользваоетелей по группам
 	 * @param {array} groups массив групп
 	 * @param {array} domains массив доменов для обработки
@@ -238,8 +263,8 @@ var HAWK_API = {
 	 * @returns {void}
 	 */
 	get_users_by_group: function(groups, domains, event) {
-
-		if(groups.length)
+		HAWK_API.print_debug(groups, domains, event);
+		if(typeof groups === 'object' && groups.length)
 		{
 			domains = domains || [document.location.host];
 			event = event || 'get_by_group';
@@ -334,7 +359,7 @@ var HAWK_API = {
 	 * @returns {Boolean}
 	 */
 	check_user_id: function(id) {
-		return /^[a-zA-Z\d]{3,64}$/.test(id);
+		return /^[a-zA-Z\d\_]{3,64}$/.test(id);
 	},
 	/**
 	 * возвращает id пользователя
@@ -361,7 +386,7 @@ var HAWK_API = {
 		{
 			type = 'hawk.' + type;
 		}
-		
+
 		$(this).on(type, fn);
 	},
 	/**
@@ -393,7 +418,7 @@ var HAWK_API = {
 	 * @returns {void}
 	 */
 	on_open: function(){
-		
+		HAWK_API.print_debug('open');
 		HAWK_API.reinitialization = false;
 		HAWK_API.ws.open = true;
 		$(HAWK_API).trigger('hawk.open');
@@ -405,7 +430,7 @@ var HAWK_API = {
 	 */
 	on_message: function(e){
 		var data = JSON.parse(e.data);
-
+		HAWK_API.print_debug(data);
 		if(!data.hasOwnProperty('error') || data.error === false)
 		{
 			if(HAWK_API.settings.encryption.enabled && typeof CryptoJS !== 'undefined'
@@ -422,6 +447,8 @@ var HAWK_API = {
 			{
 				event_type = 'hawk.server_message';
 			}
+
+			HAWK_API.print_debug(event_type);
 
 			$(HAWK_API).trigger(event_type, [data]);
 
@@ -461,7 +488,8 @@ var HAWK_API = {
 	 * @returns {void}
 	 */
 	on_close: function(e){
-//		console.log('close');
+		HAWK_API.print_debug('close');
+
 		if(e.code === 1006 || e.code === 1015)
 		{
 			HAWK_API.fix_ssl();
@@ -478,7 +506,8 @@ var HAWK_API = {
 	 * @returns {void}
 	 */
 	on_error: function(){
-//		console.log('error');
+		HAWK_API.print_debug('error');
+
 		$(HAWK_API).trigger('hawk.socket_error');
 	},
 	/**
@@ -502,6 +531,22 @@ var HAWK_API = {
 	 */
 	print_error: function(text){
 		console.error(text);
+	},
+	/**
+	* Выводит отладочное сообщение
+	*/
+	print_debug: function() {
+		if(HAWK_API.settings.debug)
+		{
+			var err = new Error();
+			var name = err.stack.split("\n").reverse()[0].trim();
+			console.group(name);
+			for(var i in arguments)
+			{
+				console.debug(arguments[i]);
+			}
+			console.groupEnd();
+		}
 	},
 	/**
 	 * форматирование объекта для шифрования
@@ -550,7 +595,7 @@ var HAWK_API = {
 		return cipherParams;
 	},
 	/**
-	 * Если обращение идёт не на стандартный порт ssl, 
+	 * Если обращение идёт не на стандартный порт ssl,
 	 * то браузер не может через wss получить сертификат
 	 * и возникает ошибка. Чтобы восстановить сертификат нужно обратиться на
 	 * соответсвующий адрес напрямую.

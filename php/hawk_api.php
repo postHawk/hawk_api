@@ -294,6 +294,40 @@ class hawk_api
 	}
 
 	/**
+	 * Получение списка групп зарегистрированного пользователя
+	 * @param string $id пользователь
+	 * @param string $acc уровень доступа
+	 * @param array $on_domains домены
+	 * @return string JSON
+	 */
+	public function get_user_groups($id, $acc = self::ACCESS_ALL, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
+	}
+
+	private function _get_user_groups($id, $acc, $on_domains)
+	{
+		if (!count($on_domains))
+		{
+			$on_domains[] = $_SERVER['HTTP_HOST'];
+		}
+
+		if ($this->check_group($groups) && $this->check_domains($on_domains))
+		{
+			return $this->transport->send(array(
+					'key'		 => $this->key,
+					'login'	 => $id,
+					'access' => $acc,
+					'domains'	 => $on_domains,
+					), 'get_group_by_simple_user');
+		}
+
+		return false;
+	}
+
+
+	/**
 	 * Отпрвка сообщения конкретному пользователю
 	 * @param string $from от кого
 	 * @param string $to кому
@@ -486,7 +520,7 @@ class hawk_api
 	 */
 	private function check_id($id)
 	{
-		if (preg_match('/^[a-zA-Z\d]{3,64}$/u', $id))
+		if (preg_match('/^[a-zA-Z\d\_]{3,64}$/u', $id))
 		{
 			return true;
 		}
