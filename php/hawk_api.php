@@ -94,6 +94,7 @@ class hawk_api
 		hawk_transport::set_url($url);
 		$this->transport = hawk_transport::get_transport();
 		$this->session_start();
+		//@todo возможно, стоит вынести работу с токеном в отдельный класс
 		$this->set_token();
 	}
 
@@ -733,6 +734,12 @@ class hawk_api
 		$this->results		 = [];
 	}
 
+	/**
+	 * Возвращает текущий токен,
+	 * если он есть
+	 *
+	 * @return boolean|String
+	 */
 	public function get_token()
 	{
 		if(!isset($_SESSION['hawk']['token']))
@@ -743,6 +750,11 @@ class hawk_api
 		return $_SESSION['hawk']['token'];
 	}
 
+	/**
+	 * Устанавливает токен для усиленной авторизации
+	 *
+	 * @param String $token Токен авторизации
+	 */
 	public function set_token($token = false)
 	{
 		if(false === $this->get_token())
@@ -752,10 +764,17 @@ class hawk_api
 				$token = $this->generate_token();
 			}
 			
-			$_SESSION['hawk']['token'] = $token;
+			$_SESSION['hawk']['token'] = (string)$token;
 		}
 	}
-	
+
+	/**
+	 * Проверяет соответствие переданного 
+	 * токена текущему и уничтожает его
+	 * 
+	 * @param String $token Токен для проверки
+	 * @return boolean
+	 */
 	public function check_token($token)
 	{
 		$result = $this->get_token() === $token;
@@ -764,16 +783,26 @@ class hawk_api
 		return $result;
 	}
 
+	/**
+	 * Очищает текущий токен
+	 */
 	public function delete_token()
 	{
 		unset($_SESSION['hawk']['token']);
 	}
 
+	/**
+	 * Генерирует новый токен
+	 * @return String
+	 */
 	private function generate_token()
 	{
 		return uniqid('hawk', true);
 	}
 
+	/*
+	 * Запускает сессию
+	 */
 	private function session_start()
 	{
 		if(session_status() !== PHP_SESSION_ACTIVE)

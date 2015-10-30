@@ -43,7 +43,22 @@ var HAWK_API = {
 			enabled: false,
 			salt: 'a3453fsdf564l546asdff6mas,.fma.S<Dfm'
 		},
-		debug: false
+		/**
+		 *
+		 * @type Boolean|String Режим отладки
+		 */
+		debug: false,
+		/**
+		 *
+		 * @type Boolean|String Токен усиленной авторизации
+		 */
+		token: false,
+		/**
+		 *
+		 * @type Boolean|String Адрес куда сервис пошлёт
+		 * запрос для проверки токена
+		 */
+		check_url: false
 	},
 	/**
 	 * преобразование ошибок сервиса в строки
@@ -346,7 +361,19 @@ var HAWK_API = {
 	set_user_id: function() {
 		if(this.check_user_id(this.settings.user_id))
 		{
-			this.send_message(this.settings.user_id);
+			if(this.settings.token)
+			{
+				this.settings.check_url = (this.settings.check_url)
+					? this.settings.check_url
+					: document.location.href
+				;
+			}
+
+			this.send_message({
+				id: this.settings.user_id,
+				token: this.settings.token,
+				check_url: this.settings.check_url
+			});
 		}
 		else
 		{
