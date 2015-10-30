@@ -93,6 +93,8 @@ class hawk_api
 		$this->key		 = $key;
 		hawk_transport::set_url($url);
 		$this->transport = hawk_transport::get_transport();
+		$this->session_start();
+		$this->set_token();
 	}
 
 	public function __call($name, $args)
@@ -729,6 +731,55 @@ class hawk_api
 		$this->errors		 = [];
 		$this->last_error	 = '';
 		$this->results		 = [];
+	}
+
+	public function get_token()
+	{
+		if(!isset($_SESSION['hawk']['token']))
+		{
+			return false;
+		}
+
+		return $_SESSION['hawk']['token'];
+	}
+
+	public function set_token($token = false)
+	{
+		if(false === $this->get_token())
+		{
+			if(false === $token)
+			{
+				$token = $this->generate_token();
+			}
+			
+			$_SESSION['hawk']['token'] = $token;
+		}
+	}
+	
+	public function check_token($token)
+	{
+		$result = $this->get_token() === $token;
+		$this->delete_token();
+		
+		return $result;
+	}
+
+	public function delete_token()
+	{
+		unset($_SESSION['hawk']['token']);
+	}
+
+	private function generate_token()
+	{
+		return uniqid('hawk', true);
+	}
+
+	private function session_start()
+	{
+		if(session_status() !== PHP_SESSION_ACTIVE)
+		{
+			session_start();
+		}
 	}
 
 	/**
