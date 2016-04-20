@@ -52,13 +52,7 @@ var HAWK_API = {
 		 *
 		 * @type Boolean|String Токен усиленной авторизации
 		 */
-		token: false,
-		/**
-		 *
-		 * @type Boolean|String Адрес куда сервис пошлёт
-		 * запрос для проверки токена
-		 */
-		check_url: false
+		token: false
 	},
 	/**
 	 * преобразование ошибок сервиса в строки
@@ -78,7 +72,8 @@ var HAWK_API = {
 		general_error: 'Общая ошибка сервера',
 		invalid_group_format: 'Неверный формат идентификатора группы',
 		invalid_group_count: 'Группа должна быть не пустым массивом',
-		access_denied_to_group: 'Доступ к группе запрещён'
+		access_denied_to_group: 'Доступ к группе запрещён',
+		invalid_token: 'Неверный токен авторизации'
 	},
 	/**
 	 * необходимость переинициализации
@@ -361,18 +356,9 @@ var HAWK_API = {
 	set_user_id: function() {
 		if(this.check_user_id(this.settings.user_id))
 		{
-			if(this.settings.token)
-			{
-				this.settings.check_url = (this.settings.check_url)
-					? this.settings.check_url
-					: document.location.href
-				;
-			}
-
 			this.send_message({
 				id: this.settings.user_id,
-				token: this.settings.token,
-				check_url: this.settings.check_url
+				token: this.settings.token
 			});
 		}
 		else

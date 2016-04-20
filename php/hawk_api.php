@@ -4,11 +4,14 @@ namespace hawk_api;
 
 require_once 'lib/transport/hawk_transport.php';
 require_once 'lib/encryption/crypt.php';
+require_once 'hawk_api_worker.php';
+
+use hawk_api\hawk_api_worker;
 
 /**
- * Класс предоставляющий api для обращения к 
+ * Класс предоставляющий api для обращения к
  * сервису Post Hawk
- * 
+ *
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
 class hawk_api
@@ -19,44 +22,10 @@ class hawk_api
 	const ACCESS_PRIVATE = 'private';
 
 	/**
-	 * ключ для шифрования запросов
-	 * @var string
-	 */
-	private $key = null;
-
-	/**
 	 *
-	 * @var object hawk_transport_socket | hawk_transport_curl
+	 * @var \hawk_api\hawk_api_worker
 	 */
-	private $transport;
-
-	/**
-	 *
-	 * @var object crypt_aes256
-	 */
-	private $encryptor = null;
-
-	/**
-	 * состояние шифрования
-	 * @var boolean
-	 */
-	private $encryption = false;
-
-	/**
-	 * тип шифрования
-	 * @var string
-	 */
-	private $encryption_type = crypt::TYPE_AES256;
-
-	/**
-	 * спиоск возможных типов групп
-	 * @var array
-	 */
-	private $accesses = [
-		self::ACCESS_PUBLIC,
-		self::ACCESS_PRIVATE,
-		self::ACCESS_ALL,
-	];
+	private $worker = null;
 
 	/**
 	 * текущий стек задач
@@ -92,10 +61,12 @@ class hawk_api
 	{
 		$this->key		 = $key;
 		hawk_transport::set_url($url);
-		$this->transport = hawk_transport::get_transport();
+		$this->worker = new hawk_api_worker(
+			hawk_transport::get_transport(),
+			$key
+		);
+
 		$this->session_start();
-		//@todo возможно, стоит вынести работу с токеном в отдельный класс
-		$this->set_token();
 	}
 
 	public function __call($name, $args)
@@ -111,19 +82,18 @@ class hawk_api
 	{
 		$this->clear();
 
-		if($this->get_encryption() && !extension_loaded('openssl'))
+		if($this->worker->get_encryption() && !extension_loaded('openssl'))
 		{
 			throw new \Exception('Для использования функции шифрования сообщений необходимо активировать поддрежку openssl');
 		}
 
 		foreach ($this->stack as $call)
 		{
-
 			$method = key($call);
 			$parmas = current($call);
 			if (!$this->has_errors())
 			{
-				$result = call_user_func_array([$this, ("_" . $method)], $parmas);
+				$result = call_user_func_array([$this->worker, $method], $parmas);
 				if ($result === false)
 				{
 					$this->set_error($method, $this->last_error);
@@ -159,19 +129,6 @@ class hawk_api
 		return $this;
 	}
 
-	private function _register_user($id)
-	{
-		if ($this->check_id($id))
-		{
-			return $this->transport->send(array(
-					'key'	 => $this->key,
-					'id'	 => $id,
-					), 'register_user');
-		}
-
-		return false;
-	}
-
 	/**
 	 * удаление пользователя из системы
 	 * @param string $id идентификатор пользователя
@@ -181,19 +138,6 @@ class hawk_api
 	{
 		$this->addStack(__FUNCTION__, func_get_args());
 		return $this;
-	}
-
-	private function _unregister_user($id)
-	{
-		if ($this->check_id($id))
-		{
-			return $this->transport->send(array(
-					'key'	 => $this->key,
-					'id'	 => $id,
-					), 'unregister_user');
-		}
-
-		return false;
 	}
 
 	/**
@@ -211,26 +155,6 @@ class hawk_api
 		return $this;
 	}
 
-	private function _add_user_to_group($id, array $groups, array $on_domains = array())
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_id($id) && $this->check_group($groups) && $this->check_domains($on_domains))
-		{
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'id'		 => $id,
-					'groups'	 => $groups,
-					'domains'	 => $on_domains,
-					), 'add_in_groups');
-		}
-
-		return false;
-	}
-
 	/**
 	 * Удаление пользователя из группы.
 	 * Пустые группы удаляются автоматически.
@@ -245,26 +169,6 @@ class hawk_api
 		return $this;
 	}
 
-	private function _remove_user_from_group($id, array $groups, array $on_domains = array())
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_id($id) && $this->check_group($groups) && $this->check_domains($on_domains))
-		{
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'id'		 => $id,
-					'groups'	 => $groups,
-					'domains'	 => $on_domains,
-					), 'remove_from_groups');
-		}
-
-		return false;
-	}
-
 	/**
 	 * получение списка пользователей в группе или группах
 	 * @param array $groups группы
@@ -275,25 +179,6 @@ class hawk_api
 	{
 		$this->addStack(__FUNCTION__, func_get_args());
 		return $this;
-	}
-
-	private function _get_user_by_group(array $groups, array $on_domains = array())
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_group($groups) && $this->check_domains($on_domains))
-		{
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'groups'	 => $groups,
-					'domains'	 => $on_domains,
-					), 'get_by_group');
-		}
-
-		return false;
 	}
 
 	/**
@@ -309,27 +194,6 @@ class hawk_api
 		return $this;
 	}
 
-	private function _get_user_groups($id, $acc, $on_domains)
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_group($groups) && $this->check_domains($on_domains))
-		{
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'login'	 => $id,
-					'access' => $acc,
-					'domains'	 => $on_domains,
-					), 'get_group_by_simple_user');
-		}
-
-		return false;
-	}
-
-
 	/**
 	 * Отпрвка сообщения конкретному пользователю
 	 * @param string $from от кого
@@ -342,32 +206,6 @@ class hawk_api
 	{
 		$this->addStack(__FUNCTION__, func_get_args());
 		return $this;
-	}
-
-	private function _send_message($from, $to, $text, array $on_domains = array())
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_id($to) && $this->check_id($from) && $this->check_domains($on_domains))
-		{
-			if($this->get_encryption())
-			{
-				$text = $this->get_encryptor()->encrypt($text);
-			}
-
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'from'		 => $from,
-					'to'		 => $to,
-					'text'		 => $text,
-					'domains'	 => $on_domains,
-					), 'send_message');
-		}
-
-		return false;
 	}
 
 	/**
@@ -384,36 +222,9 @@ class hawk_api
 		return $this;
 	}
 
-	private function _seng_group_message($from, $text, array $groups, array $on_domains = array())
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_id($from) && $this->check_group($groups) && $this->check_domains($on_domains))
-		{
-
-			if($this->get_encryption())
-			{
-				$text = $this->get_encryptor()->encrypt($text);
-			}
-
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'from'		 => $from,
-					'text'		 => $text,
-					'groups'	 => $groups,
-					'domains'	 => $on_domains,
-					), 'send_group_message');
-		}
-
-		return false;
-	}
-
 	/**
 	 * Добавляет группу
-	 * @param array $groups массив названий групп 
+	 * @param array $groups массив названий групп
 	 * @param array $on_domains на какие домены
 	 * @return string
 	 */
@@ -423,28 +234,9 @@ class hawk_api
 		return $this;
 	}
 
-	private function _add_groups(array $groups, array $on_domains = array())
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_group_acc($groups) && $this->check_domains($on_domains))
-		{
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'groups'	 => $groups,
-					'domains'	 => $on_domains,
-					), 'add_groups');
-		}
-
-		return false;
-	}
-
 	/**
 	 * Удаляет группу
-	 * @param array $groups массив названий групп 
+	 * @param array $groups массив названий групп
 	 * @param array $on_domains на какие домены
 	 * @return string
 	 */
@@ -452,23 +244,6 @@ class hawk_api
 	{
 		$this->addStack(__FUNCTION__, func_get_args());
 		return $this;
-	}
-
-	private function _remove_groups(array $groups, array $on_domains = array())
-	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		if ($this->check_group($groups) && $this->check_domains($on_domains))
-		{
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'groups'	 => $groups,
-					'domains'	 => $on_domains,
-					), 'remove_groups');
-		}
 	}
 
 	/**
@@ -484,26 +259,18 @@ class hawk_api
 		return $this;
 	}
 
-	private function _get_group_list($type = self::ACCESS_ALL, array $on_domains = array())
+	/**
+	 * Возвращает токен для авторизации пользователя
+	 *
+	 * @param type $id
+	 * @param type $salt
+	 * @param type $on_domains
+	 * @return \hawk_api\hawk_api
+	 */
+	public function get_token($id, $salt, $on_domains = array())
 	{
-		if (!count($on_domains))
-		{
-			$on_domains[] = $_SERVER['HTTP_HOST'];
-		}
-
-		$this->check_domains($on_domains);
-
-
-		if ($this->check_domains($on_domains) && $this->check_type($type))
-		{
-			return $this->transport->send(array(
-					'key'		 => $this->key,
-					'access'	 => $type,
-					'domains'	 => $on_domains,
-					), 'get_group_list');
-		}
-
-		return false;
+		$this->addStack(__FUNCTION__, func_get_args());
+		return $this;
 	}
 
 	/**
@@ -514,93 +281,6 @@ class hawk_api
 	private function addStack($method, $params)
 	{
 		$this->stack[] = [$method => $params];
-	}
-
-	/**
-	 * проверка идентификатора пользователя
-	 * @param string $id идентификатор
-	 * @return boolean
-	 */
-	private function check_id($id)
-	{
-		if (preg_match('/^[a-zA-Z\d\_]{3,64}$/u', $id))
-		{
-			return true;
-		}
-
-		$this->last_error = 'Неверный формат идентификатора';
-		return false;
-	}
-
-	/**
-	 * Проверка группы
-	 * @param array $groups названия групп
-	 * @return boolean
-	 */
-	private function check_group($groups)
-	{
-		foreach ($groups as $group)
-		{
-			if (!$this->check_id($group))
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * Проверка группы с правами
-	 * @param array $groups названия групп
-	 * @return boolean
-	 */
-	private function check_group_acc($groups)
-	{
-		foreach ($groups as $group)
-		{
-			if (!$this->check_id($group['name']) || !$this->check_type($group['access']))
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * Проверка доменов
-	 * @param array $domains домены
-	 * @return boolean
-	 */
-	private function check_domains($domains)
-	{
-		foreach ($domains as $domain)
-		{
-			if (!preg_match('/^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/', $domain))
-			{
-				$this->last_error = 'Неверный формат домена';
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * Проверка допустимости типа группы
-	 * @param string $type тип доступа
-	 * @return boolean
-	 */
-	private function check_type($type)
-	{
-		if (!in_array($type, $this->accesses))
-		{
-			$this->last_error = 'Не верный параметр доступа: ' . $type;
-			return false;
-		}
-
-		return true;
 	}
 
 	/**
@@ -660,71 +340,6 @@ class hawk_api
 	}
 
 	/**
-	 * Включает/выключает шифрование
-	 * @param boolean $use использовать ли шифрование
-	 * @return \hawk_api\hawk_api
-	 */
-	public function set_encryption($use)
-	{
-		$this->encryption = $use;
-		return $this;
-	}
-
-	/**
-	 * Возвращает текущее состояние шифрования
-	 * @return boolean
-	 */
-	public function get_encryption()
-	{
-		return $this->encryption;
-	}
-
-	/**
-	 * Устанавливает тип шифрования
-	 * @param string $type тип шифрования. Пока поддерживается только AES256
-	 * @return \hawk_api\hawk_api5
-	 */
-	public function set_encryption_type($type)
-	{
-		$this->encryption_type = $type;
-		return $this;
-	}
-
-	/**
-	 * DВозвращает тип шифрования
-	 * @return type
-	 */
-	public function get_encryption_type()
-	{
-		return $this->encryption_type;
-	}
-
-	/**
-	 * устанавливает соль для шифрования
-	 * @param type $salt соль
-	 * @return \hawk_api\hawk_api
-	 */
-	public function set_salt($salt)
-	{
-		$this->get_encryptor()->set_crypt_key($salt);
-		return $this;
-	}
-
-	/**
-	 * возвращает объект-шифровальщик
-	 * @return object crypt_aes256
-	 */
-	private function get_encryptor()
-	{
-		if(is_null($this->encryptor))
-		{
-			$this->encryptor = crypt::get_encryptor($this->get_encryption_type());
-		}
-
-		return $this->encryptor;
-	}
-
-	/**
 	 * очищает текущее состояние
 	 */
 	private function clear()
@@ -732,72 +347,6 @@ class hawk_api
 		$this->errors		 = [];
 		$this->last_error	 = '';
 		$this->results		 = [];
-	}
-
-	/**
-	 * Возвращает текущий токен,
-	 * если он есть
-	 *
-	 * @return boolean|String
-	 */
-	public function get_token()
-	{
-		if(!isset($_SESSION['hawk']['token']))
-		{
-			return false;
-		}
-
-		return $_SESSION['hawk']['token'];
-	}
-
-	/**
-	 * Устанавливает токен для усиленной авторизации
-	 *
-	 * @param String $token Токен авторизации
-	 */
-	public function set_token($token = false)
-	{
-		if(false === $this->get_token())
-		{
-			if(false === $token)
-			{
-				$token = $this->generate_token();
-			}
-			
-			$_SESSION['hawk']['token'] = (string)$token;
-		}
-	}
-
-	/**
-	 * Проверяет соответствие переданного 
-	 * токена текущему и уничтожает его
-	 * 
-	 * @param String $token Токен для проверки
-	 * @return boolean
-	 */
-	public function check_token($token)
-	{
-		$result = $this->get_token() === $token;
-		$this->delete_token();
-		
-		return $result;
-	}
-
-	/**
-	 * Очищает текущий токен
-	 */
-	public function delete_token()
-	{
-		unset($_SESSION['hawk']['token']);
-	}
-
-	/**
-	 * Генерирует новый токен
-	 * @return String
-	 */
-	private function generate_token()
-	{
-		return uniqid('hawk', true);
 	}
 
 	/*
