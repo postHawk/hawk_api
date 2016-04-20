@@ -1,9 +1,7 @@
-# API FOR SERVICE [POST HAWK](https://post-hawk.com)
+# API FOR SERVICE [POST HAWK](https://github.com/postHawk)
 
-Для того, чтобы воспользоваться услугами сервиса Вам необходимо сделать три шага.
+1. Скачайте [сервер](https://github.com/postHawk/hawk_server) и [клиент](https://github.com/postHawk/hawk_client)
+1. Настройте и запустите их
+1. Скачайте и подключить файлы апи из текущего репозитория.
 
-1. [Зарегистрироваться](https://post-hawk.com/#register)
-1. Добавить домен (ы) в настройках [учётной записи](https://post-hawk.com/#lk)
-1. Скачать и подключить файлы апи.
-
-Подробнее в [документации](http://api.post-hawk.com)
+Более подробно вы можете прочесть в [документации](http://api.post-hawk.com)
