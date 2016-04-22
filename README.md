@@ -7,4 +7,4 @@
 git clone https://github.com/postHawk/hawk_api.git
 ```
 
-Более подробно вы можете прочесть в [документации](http://api.post-hawk.com)
+Более подробно вы можете прочесть в [документации](https://github.com/postHawk/hawk_api/wiki)
