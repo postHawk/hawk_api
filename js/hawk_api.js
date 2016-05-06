@@ -29,7 +29,7 @@ var HAWK_API = {
 		 * адрес сервиса
 		 * @type {String}
 		 */
-		url: 'wss://post-hawk.com:2222',
+		url: null,
 		/**
 		 * id пользователя
 		 * @type {String}
@@ -386,6 +386,10 @@ var HAWK_API = {
 	 * @returns {HAWK_API.settings.url}
 	 */
 	get_url: function () {
+		if(!this.settings.url)
+		{
+			throw 'Для использования баблиотеки укажите адрес сервера в формате ws://my.domain.com';
+		}
 		return this.settings.url;
 	},
 	/**
@@ -503,16 +507,14 @@ var HAWK_API = {
 	on_close: function(e){
 		HAWK_API.print_debug('close');
 
-		if(e.code === 1006 || e.code === 1015)
+		if((e.code === 1006 || e.code === 1015) && document.location.protocol === 'https:')
 		{
 			HAWK_API.fix_ssl();
 		}
 		else
 		{
-			setTimeout(HAWK_API.init, 30000);
 			$(HAWK_API).trigger('hawk.close');
 		}
-		HAWK_API.reinitialization = true;
 	},
 	/**
 	 * дефолтный обработчик ошибки сокета
