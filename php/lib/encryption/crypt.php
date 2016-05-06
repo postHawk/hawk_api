@@ -29,32 +29,31 @@ class crypt
 	 * возвращает текущий ключ шифрования
 	 * @return string
 	 */
-	public function get_crypt_key()
+	public function getCryptKey()
 	{
 		return $this->crypt_key;
 	}
 
 	/**
 	 * устанавливает текущий ключ шифрования
-	 * @param type $key
+	 * @param string $key
 	 */
-	public function set_crypt_key($key)
+	public function setCryptKey($key)
 	{
 		$this->crypt_key = $key;
 	}
 
 	/**
 	 * Возвращает объект шифровальщик заданного типа
-	 * @param type $type тип шифрования
+	 * @param string $type тип шифрования
 	 * @return object 
 	 * @throws \Exception
 	 */
-	public final static function get_encryptor($type)
+	public final static function getEncryptor($type)
 	{
 		if(empty(self::$encryptor[$type]))
 		{
 			$file = __DIR__ . '/crypt_' . $type . '.php';
-
 			if(!file_exists($file))
 			{
 				throw new \Exception('Невозможно создать объект класса шифрования');
@@ -65,7 +64,7 @@ class crypt
 			{
 				require $file;
 			}
-			
+
 			self::$encryptor[$type] = new $class();
 			
 			if(!(self::$encryptor[$type] instanceof i_crypt))

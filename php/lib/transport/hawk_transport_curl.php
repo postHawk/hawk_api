@@ -34,10 +34,12 @@ class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 		$ch = curl_init(parent::$url);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 
 		curl_setopt($ch, CURLOPT_HTTPHEADER, [
 			('Origin: ' . $_SERVER['HTTP_HOST']),
-			('Transport: curl'),
+			'Transport: curl',
 		]);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

@@ -43,7 +43,7 @@ class hawk_transport
 	 * @return i_hawk_transport
 	 * @throws \Exception
 	 */
-	public static final function get_transport()
+	public static final function getTransport()
 	{
 		if(is_null(self::$transport))
 		{
@@ -73,8 +73,6 @@ class hawk_transport
 			{
 				throw new \Exception('Класс транспорта должен реализовывать интерфейс i_hawk_transport');
 			}
-			
-			
 		}
 		
 		return self::$transport;
@@ -85,15 +83,18 @@ class hawk_transport
 	 * @param string $url адрес сервиса
 	 * @throws \Exception
 	 */
-	public static function set_url($url)
+	public static function setUrl($url)
 	{
 		$parts = [];
-		if(!preg_match('/^http[s]{0,1}\:\/\/([a-z0-9.\-]+)\:([\d]{2,})$/', $url, $parts))
+		if(!preg_match('/^http[s]?:\/\/([a-z0-9.\-]+)(?::([\d]{2,}))?$/', $url, $parts))
 		{
-			throw new \Exception('Неверный формат адреса');
+			throw new \Exception('Не верный формат адреса');
 		}
 		self::$url = $url;
 		self::$host = $parts[1];
-		self::$port = $parts[2];
+		if(isset($parts[2]))
+		{
+			self::$port = $parts[2];
+		}
 	}
 }

@@ -57,16 +57,16 @@ class hawk_api
 	 * @param string $key API ключ
 	 * @param string $url адрес сервиса в формате http://url:port
 	 */
-	public function __construct($key, $url = 'https://post-hawk.com:2222')
+	public function __construct($key, $url)
 	{
 		$this->key		 = $key;
 		hawk_transport::set_url($url);
 		$this->worker = new hawk_api_worker(
-			hawk_transport::get_transport(),
+			hawk_transport::getTransport(),
 			$key
 		);
 
-		$this->session_start();
+		$this->sessionStart();
 	}
 
 	public function __call($name, $args)
@@ -82,21 +82,21 @@ class hawk_api
 	{
 		$this->clear();
 
-		if($this->worker->get_encryption() && !extension_loaded('openssl'))
+		if($this->worker->getEncryption() && !extension_loaded('openssl'))
 		{
 			throw new \Exception('Для использования функции шифрования сообщений необходимо активировать поддрежку openssl');
 		}
 
-		foreach ($this->stack as $call)
+		foreach ($this->stack as $key => $call)
 		{
 			$method = key($call);
 			$parmas = current($call);
-			if (!$this->has_errors())
+			if (!$this->hasErrors())
 			{
 				$result = call_user_func_array([$this->worker, $method], $parmas);
 				if ($result === false)
 				{
-					$this->set_error($method, $this->last_error);
+					$this->setError($method, $this->last_error);
 				}
 				else
 				{
@@ -107,12 +107,12 @@ class hawk_api
 					else
 					{
 						$this->last_error = $result['error'];
-						$this->set_error($method, $result['error']);
+						$this->setError($method, $result['error']);
 					}
 				}
 			}
 
-			unset($this->stack[$method]);
+			unset($this->stack[$key]);
 		}
 
 		return $this;
@@ -121,22 +121,22 @@ class hawk_api
 	/**
 	 * регистрация пользователя в системе
 	 * @param string $id идентификатор пользователя
-	 * @return string
+	 * @return hawk_api
 	 */
-	public function register_user($id)
+	public function registerUser($id)
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$id]);
 		return $this;
 	}
 
 	/**
 	 * удаление пользователя из системы
 	 * @param string $id идентификатор пользователя
-	 * @return string
+	 * @return hawk_api
 	 */
-	public function unregister_user($id)
+	public function unregisterUser($id)
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$id]);
 		return $this;
 	}
 
@@ -147,11 +147,11 @@ class hawk_api
 	 * @param string $id id пользователя
 	 * @param array $groups группы
 	 * @param array $on_domains домены
-	 * @return string
+	 * @return hawk_api
 	 */
-	public function add_user_to_group($id, array $groups, array $on_domains = array())
+	public function addUserToGroup($id, array $groups, array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$id, $groups, $on_domains]);
 		return $this;
 	}
 
@@ -161,11 +161,11 @@ class hawk_api
 	 * @param string $id id пользователя
 	 * @param array $groups группы
 	 * @param array $on_domains домены
-	 * @return string
+	 * @return hawk_api
 	 */
-	public function remove_user_from_group($id, array $groups, array $on_domains = array())
+	public function removeUserFromGroup($id, array $groups, array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$id, $groups, $on_domains]);
 		return $this;
 	}
 
@@ -173,11 +173,11 @@ class hawk_api
 	 * получение списка пользователей в группе или группах
 	 * @param array $groups группы
 	 * @param array $on_domains домены
-	 * @return string JSON
+	 * @return hawk_api
 	 */
-	public function get_user_by_group(array $groups, array $on_domains = array())
+	public function getUserByGroup(array $groups, array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$groups, $on_domains]);
 		return $this;
 	}
 
@@ -186,11 +186,11 @@ class hawk_api
 	 * @param string $id пользователь
 	 * @param string $acc уровень доступа
 	 * @param array $on_domains домены
-	 * @return string JSON
+	 * @return hawk_api
 	 */
-	public function get_user_groups($id, $acc = self::ACCESS_ALL, array $on_domains = array())
+	public function getUserGroups($id, $acc = self::ACCESS_ALL, array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$id, $acc, $on_domains]);
 		return $this;
 	}
 
@@ -199,12 +199,13 @@ class hawk_api
 	 * @param string $from от кого
 	 * @param string $to кому
 	 * @param mixed $text данные
+	 * @param string $event событие
 	 * @param array $on_domains на какие домены
-	 * @return string|boolean
+	 * @return hawk_api
 	 */
-	public function send_message($from, $to, $text, array $on_domains = array())
+	public function sendMessage($from, $to, $text, $event = 'sendMessage', array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$from, $to, $text, $event, $on_domains]);
 		return $this;
 	}
 
@@ -213,12 +214,13 @@ class hawk_api
 	 * @param string $from id пользователя от которого происходит рассылка
 	 * @param string $text текст сообщения
 	 * @param array $groups группы куда послать сообщения
+	 * @param string $event событие
 	 * @param array $on_domains на какие домены
-	 * @return string|boolean
+	 * @return hawk_api
 	 */
-	public function seng_group_message($from, $text, array $groups, array $on_domains = array())
+	public function sendGroupMessage($from, $text, array $groups, $event = 'sendGroupMessage', array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$from, $text, $groups, $event, $on_domains]);
 		return $this;
 	}
 
@@ -226,11 +228,11 @@ class hawk_api
 	 * Добавляет группу
 	 * @param array $groups массив названий групп
 	 * @param array $on_domains на какие домены
-	 * @return string
+	 * @return hawk_api
 	 */
-	public function add_groups(array $groups, array $on_domains = array())
+	public function addGroups(array $groups, array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$groups, $on_domains]);
 		return $this;
 	}
 
@@ -238,45 +240,45 @@ class hawk_api
 	 * Удаляет группу
 	 * @param array $groups массив названий групп
 	 * @param array $on_domains на какие домены
-	 * @return string
+	 * @return hawk_api
 	 */
-	public function remove_groups(array $groups, array $on_domains = array())
+	public function removeGroups(array $groups, array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$groups, $on_domains]);
 		return $this;
 	}
 
 	/**
 	 * Получение списка групп
-	 * @param type $type тип группы (все, открытая или закрытая)
+	 * @param string $type тип группы (все, открытая или закрытая)
 	 * @param array $on_domains на какие домены
-	 * @return JSON
+	 * @return hawk_api
 	 * @throws \Exception
 	 */
-	public function get_group_list($type = self::ACCESS_ALL, array $on_domains = array())
+	public function getGroupList($type = self::ACCESS_ALL, array $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$type, $on_domains]);
 		return $this;
 	}
 
 	/**
 	 * Возвращает токен для авторизации пользователя
 	 *
-	 * @param type $id
-	 * @param type $salt
-	 * @param type $on_domains
-	 * @return \hawk_api\hawk_api
+	 * @param string $id
+	 * @param string $salt
+	 * @param array $on_domains
+	 * @return hawk_api
 	 */
-	public function get_token($id, $salt, $on_domains = array())
+	public function getToken($id, $salt, $on_domains = array())
 	{
-		$this->addStack(__FUNCTION__, func_get_args());
+		$this->addStack(__FUNCTION__, [$id, $salt, $on_domains]);
 		return $this;
 	}
 
 	/**
 	 * Добавляет метод в очередь выполнения
-	 * @param type $method название метода
-	 * @param type $params параметры
+	 * @param string $method название метода
+	 * @param array $params параметры
 	 */
 	private function addStack($method, $params)
 	{
@@ -287,7 +289,7 @@ class hawk_api
 	 * Проверка наличия ошибок выполнения
 	 * @return boolean
 	 */
-	public function has_errors()
+	public function hasErrors()
 	{
 		return !empty($this->errors);
 	}
@@ -296,7 +298,7 @@ class hawk_api
 	 * Получение ошибок выполнения
 	 * @return array
 	 */
-	public function get_errors()
+	public function getErrors()
 	{
 		return $this->errors;
 	}
@@ -306,7 +308,7 @@ class hawk_api
 	 * @param string $method метод, сгенерировавший ошибку
 	 * @param string $text тексе ошибки
 	 */
-	private function set_error($method, $text)
+	private function setError($method, $text)
 	{
 		$this->errors = [$method => $text];
 	}
@@ -315,7 +317,7 @@ class hawk_api
 	 * Возвращает результат выполнения запросов
 	 * @return array
 	 */
-	public function get_results()
+	public function getResults()
 	{
 		return $this->results;
 	}
@@ -325,7 +327,7 @@ class hawk_api
 	 * @param string $method название метода
 	 * @return array
 	 */
-	public function get_result($method)
+	public function getResult($method)
 	{
 		$result = [];
 		foreach ($this->results as $call)
@@ -349,10 +351,10 @@ class hawk_api
 		$this->results		 = [];
 	}
 
-	/*
+	/**
 	 * Запускает сессию
 	 */
-	private function session_start()
+	private function sessionStart()
 	{
 		if(session_status() !== PHP_SESSION_ACTIVE)
 		{
@@ -367,5 +369,4 @@ class hawk_api
 	{
 
 	}
-
 }

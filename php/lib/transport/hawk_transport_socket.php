@@ -47,7 +47,6 @@ class hawk_transport_socket extends hawk_transport implements i_hawk_transport
 		$in .= "Connection: keep-alive\r\n";
 		$in .= "Transport: sokets\r\n\r\n";
 		$in .= $json;
-		$out = '';
 
 		if(socket_write($socket, $in, strlen($in)) === false)
 		{

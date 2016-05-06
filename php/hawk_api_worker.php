@@ -22,7 +22,7 @@ class hawk_api_worker
 
 	/**
 	 *
-	 * @var object hawk_transport_socket | hawk_transport_curl
+	 * @var i_hawk_transport
 	 */
 	private $transport;
 
@@ -43,6 +43,12 @@ class hawk_api_worker
 	 * @var string
 	 */
 	private $encryption_type = crypt::TYPE_AES256;
+
+	/**
+	 * Последняя возникшая ошибка
+	 * @var array
+	 */
+	private $last_error	 = '';
 
 	/**
 	 * спиоск возможных типов групп
@@ -84,9 +90,9 @@ class hawk_api_worker
 	}
 
 
-	public function register_user($id)
+	public function registerUser($id)
 	{
-		if ($this->check_id($id))
+		if ($this->checkId($id))
 		{
 			return $this->transport->send(array(
 				'key'	 => $this->key,
@@ -97,9 +103,9 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function unregister_user($id)
+	public function unregisterUser($id)
 	{
-		if ($this->check_id($id))
+		if ($this->checkId($id))
 		{
 			return $this->transport->send(array(
 				'key'	 => $this->key,
@@ -110,19 +116,19 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function add_user_to_group($id, array $groups, array $on_domains = array())
+	public function addUserToGroup($id, array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_id($id) && $this->check_group($groups) && $this->check_domains($on_domains))
+		if ($this->checkId($id) && $this->checkGroup($groups) && $this->checkDomains($on_domains))
 		{
 			return $this->transport->send(array(
 					'key'		 => $this->key,
 					'id'		 => $id,
-					'groups'	 => $groups,
+					'groups'	 => array_values($groups),
 					'domains'	 => $on_domains,
 					), 'add_in_groups');
 		}
@@ -130,19 +136,19 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function remove_user_from_group($id, array $groups, array $on_domains = array())
+	public function removeUserFromGroup($id, array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_id($id) && $this->check_group($groups) && $this->check_domains($on_domains))
+		if ($this->checkId($id) && $this->checkGroup($groups) && $this->checkDomains($on_domains))
 		{
 			return $this->transport->send(array(
 				'key'		 => $this->key,
 				'id'		 => $id,
-				'groups'	 => $groups,
+				'groups'	 => array_values($groups),
 				'domains'	 => $on_domains,
 			), 'remove_from_groups');
 		}
@@ -150,18 +156,18 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function get_user_by_group(array $groups, array $on_domains = array())
+	public function getUserByGroup(array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_group($groups) && $this->check_domains($on_domains))
+		if ($this->checkGroup($groups) && $this->checkDomains($on_domains))
 		{
 			return $this->transport->send(array(
 				'key'		 => $this->key,
-				'groups'	 => $groups,
+				'groups'	 => array_values($groups),
 				'domains'	 => $on_domains,
 			), 'get_by_group');
 		}
@@ -169,14 +175,14 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function get_user_groups($id, $acc, $on_domains)
+	public function getUserGroups($id, $acc, $on_domains)
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_group($groups) && $this->check_domains($on_domains))
+		if ($this->checkId($id) && $this->checkDomains($on_domains))
 		{
 			return $this->transport->send(array(
 					'key'		 => $this->key,
@@ -189,18 +195,18 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function send_message($from, $to, $text, array $on_domains = array())
+	public function sendMessage($from, $to, $text, $event, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_id($to) && $this->check_id($from) && $this->check_domains($on_domains))
+		if ($this->checkId($to) && $this->checkId($from) && $this->checkDomains($on_domains))
 		{
-			if($this->get_encryption())
+			if($this->getEncryption())
 			{
-				$text = $this->get_encryptor()->encrypt($text);
+				$text = $this->getEncryptor()->encrypt($text);
 			}
 
 			return $this->transport->send(array(
@@ -208,6 +214,7 @@ class hawk_api_worker
 				'from'		 => $from,
 				'to'		 => $to,
 				'text'		 => $text,
+				'event'		 => $event,
 				'domains'	 => $on_domains,
 			), 'send_message');
 		}
@@ -215,26 +222,27 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function seng_group_message($from, $text, array $groups, array $on_domains = array())
+	public function sendGroupMessage($from, $text, array $groups, $event, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_id($from) && $this->check_group($groups) && $this->check_domains($on_domains))
+		if ($this->checkId($from) && $this->checkGroup($groups) && $this->checkDomains($on_domains))
 		{
 
-			if($this->get_encryption())
+			if($this->getEncryption())
 			{
-				$text = $this->get_encryptor()->encrypt($text);
+				$text = $this->getEncryptor()->encrypt($text);
 			}
 
 			return $this->transport->send(array(
 				'key'		 => $this->key,
 				'from'		 => $from,
 				'text'		 => $text,
-				'groups'	 => $groups,
+				'groups'	 => array_values($groups),
+				'event'		 => $event,
 				'domains'	 => $on_domains,
 			), 'send_group_message');
 		}
@@ -242,18 +250,18 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function add_groups(array $groups, array $on_domains = array())
+	public function addGroups(array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_group_acc($groups) && $this->check_domains($on_domains))
+		if ($this->checkGroupAcc($groups) && $this->checkDomains($on_domains))
 		{
 			return $this->transport->send(array(
 				'key'		 => $this->key,
-				'groups'	 => $groups,
+				'groups'	 => array_values($groups),
 				'domains'	 => $on_domains,
 			), 'add_groups');
 		}
@@ -261,31 +269,33 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function remove_groups(array $groups, array $on_domains = array())
+	public function removeGroups(array $groups, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_group($groups) && $this->check_domains($on_domains))
+		if ($this->checkGroup($groups) && $this->checkDomains($on_domains))
 		{
 			return $this->transport->send(array(
 				'key'		 => $this->key,
-				'groups'	 => $groups,
+				'groups'	 => array_values($groups),
 				'domains'	 => $on_domains,
 			), 'remove_groups');
 		}
+
+		return false;
 	}
 
-	public function get_group_list($type = self::ACCESS_ALL, array $on_domains = array())
+	public function getGroupList($type = self::ACCESS_ALL, array $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_domains($on_domains) && $this->check_type($type))
+		if ($this->checkDomains($on_domains) && $this->checkType($type))
 		{
 			return $this->transport->send(array(
 				'key'		 => $this->key,
@@ -297,14 +307,14 @@ class hawk_api_worker
 		return false;
 	}
 
-	public function get_token($id, $salt, $on_domains = array())
+	public function getToken($id, $salt, $on_domains = array())
 	{
 		if (!count($on_domains))
 		{
 			$on_domains[] = $_SERVER['HTTP_HOST'];
 		}
 
-		if ($this->check_domains($on_domains) && $this->check_id($id))
+		if ($this->checkDomains($on_domains) && $this->checkId($id))
 		{
 			return $this->transport->send(array(
 				'key'		 => $this->key,
@@ -313,6 +323,8 @@ class hawk_api_worker
 				'domains'	 => $on_domains,
 			), 'get_token');
 		}
+
+		return false;
 	}
 
 	/**
@@ -320,9 +332,9 @@ class hawk_api_worker
 	 * @param string $id идентификатор
 	 * @return boolean
 	 */
-	private function check_id($id)
+	private function checkId($id)
 	{
-		if (preg_match('/^[a-zA-Z\d\_]{3,64}$/u', $id))
+		if (preg_match('/^[a-zA-Z\d_]{3,64}$/u', $id))
 		{
 			return true;
 		}
@@ -336,11 +348,11 @@ class hawk_api_worker
 	 * @param array $groups названия групп
 	 * @return boolean
 	 */
-	private function check_group($groups)
+	private function checkGroup($groups)
 	{
 		foreach ($groups as $group)
 		{
-			if (!$this->check_id($group))
+			if (!$this->checkId($group))
 			{
 				return false;
 			}
@@ -354,11 +366,11 @@ class hawk_api_worker
 	 * @param array $groups названия групп
 	 * @return boolean
 	 */
-	private function check_group_acc($groups)
+	private function checkGroupAcc($groups)
 	{
 		foreach ($groups as $group)
 		{
-			if (!$this->check_id($group['name']) || !$this->check_type($group['access']))
+			if (!$this->checkId($group['name']) || !$this->checkType($group['access']))
 			{
 				return false;
 			}
@@ -372,7 +384,7 @@ class hawk_api_worker
 	 * @param array $domains домены
 	 * @return boolean
 	 */
-	private function check_domains($domains)
+	private function checkDomains($domains)
 	{
 		foreach ($domains as $domain)
 		{
@@ -391,7 +403,7 @@ class hawk_api_worker
 	 * @param string $type тип доступа
 	 * @return boolean
 	 */
-	private function check_type($type)
+	private function checkType($type)
 	{
 		if (!in_array($type, $this->accesses))
 		{
@@ -405,9 +417,9 @@ class hawk_api_worker
 	/**
 	 * Включает/выключает шифрование
 	 * @param boolean $use использовать ли шифрование
-	 * @return \hawk_api\hawk_api
+	 * @return hawk_api_worker
 	 */
-	public function set_encryption($use)
+	public function setEncryption($use)
 	{
 		$this->encryption = $use;
 		return $this;
@@ -417,7 +429,7 @@ class hawk_api_worker
 	 * Возвращает текущее состояние шифрования
 	 * @return boolean
 	 */
-	public function get_encryption()
+	public function getEncryption()
 	{
 		return $this->encryption;
 	}
@@ -425,31 +437,31 @@ class hawk_api_worker
 	/**
 	 * Устанавливает тип шифрования
 	 * @param string $type тип шифрования. Пока поддерживается только AES256
-	 * @return \hawk_api\hawk_api5
+	 * @return hawk_api_worker
 	 */
-	public function set_encryption_type($type)
+	public function setEncryptionType($type)
 	{
 		$this->encryption_type = $type;
 		return $this;
 	}
 
 	/**
-	 * DВозвращает тип шифрования
-	 * @return type
+	 * Возвращает тип шифрования
+	 * @return string
 	 */
-	public function get_encryption_type()
+	public function getEncryptionType()
 	{
 		return $this->encryption_type;
 	}
 
 	/**
 	 * устанавливает соль для шифрования
-	 * @param type $salt соль
-	 * @return \hawk_api\hawk_api
+	 * @param string $salt соль
+	 * @return hawk_api_worker
 	 */
-	public function set_salt($salt)
+	public function setSalt($salt)
 	{
-		$this->get_encryptor()->set_crypt_key($salt);
+		$this->getEncryptor()->setCryptKey($salt);
 		return $this;
 	}
 
@@ -457,11 +469,11 @@ class hawk_api_worker
 	 * возвращает объект-шифровальщик
 	 * @return object crypt_aes256
 	 */
-	private function get_encryptor()
+	private function getEncryptor()
 	{
 		if(is_null($this->encryptor))
 		{
-			$this->encryptor = crypt::get_encryptor($this->get_encryption_type());
+			$this->encryptor = crypt::getEncryptor($this->getEncryptionType());
 		}
 
 		return $this->encryptor;

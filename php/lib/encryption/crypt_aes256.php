@@ -27,7 +27,7 @@ class crypt_aes256 extends crypt implements i_crypt
 			return false;
 		}
 
-		$u_salt = $this->get_crypt_key();
+		$u_salt = $this->getCryptKey();
 
 		try
 		{
@@ -67,7 +67,7 @@ class crypt_aes256 extends crypt implements i_crypt
 			return false;
 		}
 
-		$u_salt = self::get_crypt_key();
+		$u_salt = $this->getCryptKey();
 
 		$jsondata	 = json_decode($jsonString, true);
 		$salt		 = hex2bin($jsondata["s"]);
