@@ -1,12 +1,10 @@
 <?php
 
-namespace hawk_api;
+namespace Hawk\Api;
 
-require_once 'lib/transport/hawk_transport.php';
-require_once 'lib/encryption/crypt.php';
-require_once 'hawk_api_worker.php';
-
-use hawk_api\hawk_api_worker;
+use Hawk\Api\Transport\HawkTransport;
+use Hawk\Api\Transport\HawkTransportCurl;
+use Hawk\Api\Transport\HawTransportSocket;
 
 /**
  * Класс предоставляющий api для обращения к
@@ -14,16 +12,15 @@ use hawk_api\hawk_api_worker;
  *
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
-class hawk_api
+class HawkApi
 {
-
 	const ACCESS_ALL	 = 'all';
 	const ACCESS_PUBLIC	 = 'public';
 	const ACCESS_PRIVATE = 'private';
 
 	/**
 	 *
-	 * @var \hawk_api\hawk_api_worker
+	 * @var HawkApiWorker
 	 */
 	private $worker = null;
 
@@ -57,12 +54,12 @@ class hawk_api
 	 * @param string $key API ключ
 	 * @param string $url адрес сервиса в формате http://url:port
 	 */
-	public function __construct($key, $url)
+	public function __construct($key, $url = 'https://post-hawk.com:2222')
 	{
 		$this->key		 = $key;
-		hawk_transport::set_url($url);
-		$this->worker = new hawk_api_worker(
-			hawk_transport::getTransport(),
+		HawkTransport::setUrl($url);
+		$this->worker = new HawkApiWorker(
+			HawkTransport::getTransport(),
 			$key
 		);
 
@@ -121,7 +118,7 @@ class hawk_api
 	/**
 	 * регистрация пользователя в системе
 	 * @param string $id идентификатор пользователя
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function registerUser($id)
 	{
@@ -132,7 +129,7 @@ class hawk_api
 	/**
 	 * удаление пользователя из системы
 	 * @param string $id идентификатор пользователя
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function unregisterUser($id)
 	{
@@ -147,7 +144,7 @@ class hawk_api
 	 * @param string $id id пользователя
 	 * @param array $groups группы
 	 * @param array $on_domains домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function addUserToGroup($id, array $groups, array $on_domains = array())
 	{
@@ -161,7 +158,7 @@ class hawk_api
 	 * @param string $id id пользователя
 	 * @param array $groups группы
 	 * @param array $on_domains домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function removeUserFromGroup($id, array $groups, array $on_domains = array())
 	{
@@ -173,7 +170,7 @@ class hawk_api
 	 * получение списка пользователей в группе или группах
 	 * @param array $groups группы
 	 * @param array $on_domains домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function getUserByGroup(array $groups, array $on_domains = array())
 	{
@@ -186,7 +183,7 @@ class hawk_api
 	 * @param string $id пользователь
 	 * @param string $acc уровень доступа
 	 * @param array $on_domains домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function getUserGroups($id, $acc = self::ACCESS_ALL, array $on_domains = array())
 	{
@@ -201,7 +198,7 @@ class hawk_api
 	 * @param mixed $text данные
 	 * @param string $event событие
 	 * @param array $on_domains на какие домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function sendMessage($from, $to, $text, $event = 'sendMessage', array $on_domains = array())
 	{
@@ -216,7 +213,7 @@ class hawk_api
 	 * @param array $groups группы куда послать сообщения
 	 * @param string $event событие
 	 * @param array $on_domains на какие домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function sendGroupMessage($from, $text, array $groups, $event = 'sendGroupMessage', array $on_domains = array())
 	{
@@ -228,7 +225,7 @@ class hawk_api
 	 * Добавляет группу
 	 * @param array $groups массив названий групп
 	 * @param array $on_domains на какие домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function addGroups(array $groups, array $on_domains = array())
 	{
@@ -240,7 +237,7 @@ class hawk_api
 	 * Удаляет группу
 	 * @param array $groups массив названий групп
 	 * @param array $on_domains на какие домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function removeGroups(array $groups, array $on_domains = array())
 	{
@@ -252,7 +249,7 @@ class hawk_api
 	 * Получение списка групп
 	 * @param string $type тип группы (все, открытая или закрытая)
 	 * @param array $on_domains на какие домены
-	 * @return hawk_api
+	 * @return HawkApi
 	 * @throws \Exception
 	 */
 	public function getGroupList($type = self::ACCESS_ALL, array $on_domains = array())
@@ -267,7 +264,7 @@ class hawk_api
 	 * @param string $id
 	 * @param string $salt
 	 * @param array $on_domains
-	 * @return hawk_api
+	 * @return HawkApi
 	 */
 	public function getToken($id, $salt, $on_domains = array())
 	{
@@ -369,4 +366,5 @@ class hawk_api
 	{
 
 	}
+
 }

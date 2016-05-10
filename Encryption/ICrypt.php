@@ -1,12 +1,12 @@
 <?php
-namespace hawk_api;
+namespace Hawk\Api\Encryption;
 
 /**
  * Интерфейс, который необходимо реализовать 
  * для создания новых типов щифрования
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
-interface i_crypt
+interface ICrypt
 {
 	/**
 	 * Шифрование

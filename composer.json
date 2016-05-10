@@ -1,0 +1,26 @@
+{
+    "name": "post-hawk/hawk-api",
+    "type": "library",
+    "description": "Api for Post Hawk service",
+    "keywords": [],
+    "homepage": "https://github.com/postHawk/hawk_api",
+    "license": "MIT",
+    "authors": [
+        {"name": "Barulin Maxim", "email": "mbarulin@gmail.com"}
+    ],
+    "require": {
+        "php": ">=5.5"
+    },
+    "require-dev": {
+        
+    },
+    "suggest": {
+        
+    },
+    "autoload": {
+        "Hawk\\Api\\": ""
+    },
+    "extra": {
+       
+    }
+}

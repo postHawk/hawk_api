@@ -1,14 +1,15 @@
 <?php
-namespace hawk_api;
+namespace Hawk\Api;
+use Hawk\Api\Encryption\Crypt;
+use Hawk\Api\Transport\HawkTransportCurl;
+use Hawk\Api\Transport\HawTransportSocket;
 
-require_once 'lib/transport/hawk_transport.php';
-require_once 'lib/encryption/crypt.php';
 /**
  * Класс выполняющий непосредственные запросы к апи
  *
  * @author Maximilian
  */
-class hawk_api_worker
+class HawkApiWorker
 {
 	const ACCESS_ALL	 = 'all';
 	const ACCESS_PUBLIC	 = 'public';
@@ -22,7 +23,7 @@ class hawk_api_worker
 
 	/**
 	 *
-	 * @var i_hawk_transport
+	 * @var HawkTransportCurl | HawTransportSocket
 	 */
 	private $transport;
 
@@ -42,7 +43,7 @@ class hawk_api_worker
 	 * тип шифрования
 	 * @var string
 	 */
-	private $encryption_type = crypt::TYPE_AES256;
+	private $encryption_type = Crypt::TYPE_AES256;
 
 	/**
 	 * Последняя возникшая ошибка
@@ -417,7 +418,7 @@ class hawk_api_worker
 	/**
 	 * Включает/выключает шифрование
 	 * @param boolean $use использовать ли шифрование
-	 * @return hawk_api_worker
+	 * @return HawkApiWorker
 	 */
 	public function setEncryption($use)
 	{
@@ -437,7 +438,7 @@ class hawk_api_worker
 	/**
 	 * Устанавливает тип шифрования
 	 * @param string $type тип шифрования. Пока поддерживается только AES256
-	 * @return hawk_api_worker
+	 * @return HawkApiWorker
 	 */
 	public function setEncryptionType($type)
 	{
@@ -457,7 +458,7 @@ class hawk_api_worker
 	/**
 	 * устанавливает соль для шифрования
 	 * @param string $salt соль
-	 * @return hawk_api_worker
+	 * @return HawkApiWorker
 	 */
 	public function setSalt($salt)
 	{
@@ -473,7 +474,7 @@ class hawk_api_worker
 	{
 		if(is_null($this->encryptor))
 		{
-			$this->encryptor = crypt::getEncryptor($this->getEncryptionType());
+			$this->encryptor = Crypt::getEncryptor($this->getEncryptionType());
 		}
 
 		return $this->encryptor;

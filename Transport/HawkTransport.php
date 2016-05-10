@@ -1,5 +1,5 @@
 <?php
-namespace hawk_api;
+namespace Hawk\Api\Transport;
 
 /**
  * Базовый класс транспортов. Отвечает за 
@@ -7,11 +7,11 @@ namespace hawk_api;
  * 
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
-class hawk_transport
+class HawkTransport
 {
 	/**
 	 *
-	 * @var i_hawk_transport текущий транспорт
+	 * @var HawkTransport текущий транспорт
 	 */
 	private static $transport = null;
 	/**
@@ -40,7 +40,7 @@ class hawk_transport
 
 	/**
 	 * Снглтон для получения текущего объекта транспорта
-	 * @return i_hawk_transport
+	 * @return HawkTransport
 	 * @throws \Exception
 	 */
 	public static final function getTransport()
@@ -50,28 +50,24 @@ class hawk_transport
 			$transport = null;
 			if(extension_loaded('curl'))
 			{
-				$transport = 'curl';
+				$transport = 'Curl';
 			}
 			elseif(extension_loaded('sockets'))
 			{
-				$transport = 'socket';
+				$transport = 'Socket';
 			}
 			else
 			{
 				throw new \Exception('Невозможно создать транспорт, пожалуйста включите curl или sockets расширения');
 			}
 			
-			$class = 'hawk_api\\hawk_transport_' . $transport;
-			if(!class_exists($class))
-			{
-				require 'hawk_transport_' . $transport . '.php';
-			}
+			$class = 'HawkTransport' . $transport;
 
 			self::$transport = new $class();
 			
-			if(!(self::$transport instanceof i_hawk_transport))
+			if(!(self::$transport instanceof IHawkTransport))
 			{
-				throw new \Exception('Класс транспорта должен реализовывать интерфейс i_hawk_transport');
+				throw new \Exception('Класс транспорта должен реализовывать интерфейс IHawkTransport');
 			}
 		}
 		

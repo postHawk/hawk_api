@@ -1,12 +1,12 @@
 <?php
-namespace hawk_api;
+namespace Hawk\Api\Encryption;
 
 /**
  * Корневой класс для создания объектов шифрования
  *
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
-class crypt
+class Crypt
 {
 	/**
 	 *
@@ -16,14 +16,14 @@ class crypt
 
 	/**
 	 *
-	 * @var i_crypt массив шифраторов
+	 * @var ICrypt массив шифраторов
 	 */
 	private static $encryptor = [];
 
 	/**
 	 * Тип шифрования AES256
 	 */
-	const TYPE_AES256 = 'aes256';
+	const TYPE_AES256 = 'Aes256';
 
 	/**
 	 * возвращает текущий ключ шифрования
@@ -53,23 +53,17 @@ class crypt
 	{
 		if(empty(self::$encryptor[$type]))
 		{
-			$file = __DIR__ . '/crypt_' . $type . '.php';
-			if(!file_exists($file))
+			$class = 'Crypt' . $type;
+			if(!class_exists($class))
 			{
 				throw new \Exception('Невозможно создать объект класса шифрования');
 			}
 
-			$class = 'hawk_api\\crypt_' . $type;
-			if(!class_exists($class))
-			{
-				require $file;
-			}
-
 			self::$encryptor[$type] = new $class();
 			
-			if(!(self::$encryptor[$type] instanceof i_crypt))
+			if(!(self::$encryptor[$type] instanceof ICrypt))
 			{
-				throw new \Exception('Класс шифрования должен реализовывать интерфейс i_crypt');
+				throw new \Exception('Класс шифрования должен реализовывать интерфейс ICrypt');
 			}
 		}
 

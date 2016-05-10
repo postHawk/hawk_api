@@ -1,14 +1,12 @@
 <?php
-namespace hawk_api;
-
-require_once __DIR__ . '/../interface/i_hawk_transport.php';
+namespace Hawk\Api\Transport;
 
 /**
  * Класс реалзизующий отправку сообщений путём http запросов
  * 
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
-class hawk_transport_curl extends hawk_transport implements i_hawk_transport
+class HawkTransportCurl extends HawkTransport implements IHawkTransport
 {
 	/**
 	 * конструктор
@@ -22,7 +20,8 @@ class hawk_transport_curl extends hawk_transport implements i_hawk_transport
 	 * отправка сообщения
 	 * @param array $data сообщение
 	 * @param string $type тип сообщения
-	 * @return type
+	 * @return array
+	 * @throws \Exception
 	 */
 	public function send($data, $type)
 	{

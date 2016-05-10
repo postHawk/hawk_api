@@ -1,5 +1,5 @@
 <?php
-namespace hawk_api;
+namespace Hawk\Api\Transport;
 
 /**
  * Интерфейс , который необходимо реализовать 
@@ -7,7 +7,7 @@ namespace hawk_api;
  * 
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
-interface i_hawk_transport
+interface IHawkTransport
 {
 	/**
 	 * отправка сообщения
