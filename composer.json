@@ -18,7 +18,9 @@
         
     },
     "autoload": {
-        "Hawk\\Api\\": ""
+        "psr-4": {
+          "Hawk\\Api\\": ""
+        },
     },
     "extra": {
        
