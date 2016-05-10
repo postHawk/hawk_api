@@ -61,7 +61,7 @@ class HawkTransport
 				throw new \Exception('Невозможно создать транспорт, пожалуйста включите curl или sockets расширения');
 			}
 			
-			$class = 'HawkTransport' . $transport;
+			$class = __NAMESPACE__ . '\\HawkTransport' . $transport;
 
 			self::$transport = new $class();
 			

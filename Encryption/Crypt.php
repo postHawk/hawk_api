@@ -53,7 +53,7 @@ class Crypt
 	{
 		if(empty(self::$encryptor[$type]))
 		{
-			$class = 'Crypt' . $type;
+			$class = __NAMESPACE__ . '\\Crypt' . $type;
 			if(!class_exists($class))
 			{
 				throw new \Exception('Невозможно создать объект класса шифрования');
