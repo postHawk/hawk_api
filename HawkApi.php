@@ -261,14 +261,20 @@ class HawkApi
 	/**
 	 * Возвращает токен для авторизации пользователя
 	 *
-	 * @param string $id
-	 * @param string $salt
-	 * @param array $on_domains
+	 * @param string $id id пользователя
+	 * @param string $salt соль для шифрования
+	 * @param array $on_domains на какие домены
 	 * @return HawkApi
 	 */
-	public function getToken($id, $salt, $on_domains = array())
+	public function getToken($id, $salt, array $on_domains = array())
 	{
 		$this->addStack(__FUNCTION__, [$id, $salt, $on_domains]);
+		return $this;
+	}
+	
+	public function isOnline($id, array $on_domains = array())
+	{
+		$this->addStack(__FUNCTION__, [$id, $on_domains]);
 		return $this;
 	}
 

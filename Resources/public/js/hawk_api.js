@@ -248,7 +248,7 @@ var HAWK_API = {
 	 *
 	 * @param {String} id логин пользователя
 	 * @param {array} domains массив доменов для обработки
-	 * @param {String} event название события (по-умолчанию add_in_groups)
+	 * @param {String} event название события (по-умолчанию get_group_by_simple_user)
 	 * @returns {void}
 	 */
 	get_groups_by_user: function(id, domains, event) {
@@ -328,7 +328,7 @@ var HAWK_API = {
 	 * @param {array} groups массив групп
 	 * @param {String} id id пользователя
 	 * @param {array} domains массив доменов для обработки
-	 * @param {String} event название события (по-умолчанию add_in_groups)
+	 * @param {String} event название события (по-умолчанию remove_from_groups)
 	 * @returns {void}
 	 */
 	remove_user_from_group: function(groups, id, domains, event) {
@@ -348,7 +348,25 @@ var HAWK_API = {
 			this.send_message(msg);
 		}
 	},
+	/**
+	 * Проверка статуса пользователя
+	 * @param {String} id id пользователя
+	 * @param {array} domains массив доменов для обработки
+	 * @param {String} event название события (по-умолчанию is_online)
+     */
+	is_online: function (id, domains, event) {
+		domains = domains || [document.location.host];
+		event = event || 'is_online';
+		id = id || this.get_user_id();
+		var msg = {
+			id: id,
+			domains: domains,
+			action: 'is_online',
+			event: event
+		};
 
+		this.send_message(msg);
+	},
 	/**
 	 * метод устанавливает текущего пользователя
 	 * @returns {void}

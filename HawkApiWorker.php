@@ -328,6 +328,25 @@ class HawkApiWorker
 		return false;
 	}
 
+	public function isOnline($id, array $on_domains = array())
+	{
+		if (!count($on_domains))
+		{
+			$on_domains[] = $_SERVER['HTTP_HOST'];
+		}
+
+		if ($this->checkDomains($on_domains) && $this->checkId($id))
+		{
+			return $this->transport->send(array(
+				'key'		 => $this->key,
+				'id'	 => $id,
+				'domains'	 => $on_domains,
+			), 'is_online');
+		}
+
+		return false;
+	}
+
 	/**
 	 * проверка идентификатора пользователя
 	 * @param string $id идентификатор
