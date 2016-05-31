@@ -7,7 +7,7 @@ namespace Hawk\Api\Transport;
  * 
  * @author Maxim Barulin <mbarulin@gmail.com>
  */
-class HawTransportSocket extends HawkTransport implements IHawkTransport
+class HawkTransportSocket extends HawkTransport implements IHawkTransport
 {
 	/**
 	 * конструктор
