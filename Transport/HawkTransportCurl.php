@@ -46,7 +46,9 @@ class HawkTransportCurl extends HawkTransport implements IHawkTransport
 		
 		if($output === false)
 		{
-		    throw new \Exception( 'Ошибка curl: ' . curl_error($ch));
+			return [
+				'error' => 'Ошибка curl: ' . curl_error($ch)
+			];
 		}
 
 		curl_close($ch);
