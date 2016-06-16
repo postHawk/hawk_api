@@ -38,7 +38,7 @@ class HawkApi
 
 	/**
 	 * Последняя возникшая ошибка
-	 * @var array
+	 * @var String
 	 */
 	private $last_error	 = '';
 
@@ -91,9 +91,10 @@ class HawkApi
 			if (!$this->hasErrors())
 			{
 				$result = call_user_func_array([$this->worker, $method], $parmas);
+
 				if ($result === false)
 				{
-					$this->setError($method, $this->last_error);
+					$this->setError($method, $this->worker->getLastError());
 				}
 				else
 				{
@@ -363,6 +364,14 @@ class HawkApi
 		{
 			session_start();
 		}
+	}
+
+	/**
+	 * @return String
+	 */
+	public function getLastError()
+	{
+		return $this->last_error;
 	}
 
 	/**

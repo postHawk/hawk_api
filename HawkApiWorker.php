@@ -47,7 +47,7 @@ class HawkApiWorker
 
 	/**
 	 * Последняя возникшая ошибка
-	 * @var array
+	 * @var String
 	 */
 	private $last_error	 = '';
 
@@ -408,7 +408,8 @@ class HawkApiWorker
 	{
 		foreach ($domains as $domain)
 		{
-			if (!preg_match('/^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/', $domain))
+			if (!preg_match('/^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/', $domain)
+				&& !preg_match('/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(?::([\d]{2,}))?$/', $domain))
 			{
 				$this->last_error = 'Неверный формат домена';
 				return false;
@@ -483,6 +484,14 @@ class HawkApiWorker
 	{
 		$this->getEncryptor()->setCryptKey($salt);
 		return $this;
+	}
+
+	/**
+	 * @return String
+	 */
+	public function getLastError()
+	{
+		return $this->last_error;
 	}
 
 	/**
